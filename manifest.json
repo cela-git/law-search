@@ -1,0 +1,40 @@
+{
+  "laws": [
+    {
+      "id": "ICN_ACT",
+      "file": "laws/ICN_ACT.md",
+      "title": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+      "short": "정보통신망법",
+      "type": "법률",
+      "category": "정보통신",
+      "no": "법률 제21066호",
+      "enforced": "2025-10-01",
+      "version": "20251001",
+      "order": 10
+    },
+    {
+      "id": "ICN_DECREE",
+      "file": "laws/ICN_DECREE.md",
+      "title": "정보통신망 이용촉진 및 정보보호 등에 관한 법률 시행령",
+      "short": "정보통신망법 시행령",
+      "type": "대통령령",
+      "category": "정보통신",
+      "no": "대통령령 제36220호",
+      "enforced": "2026-03-24",
+      "version": "20260324",
+      "order": 11
+    },
+    {
+      "id": "ICN_RULE",
+      "file": "laws/ICN_RULE.md",
+      "title": "정보통신망 이용촉진 및 정보보호 등에 관한 법률 시행규칙",
+      "short": "정보통신망법 시행규칙",
+      "type": "부령",
+      "category": "정보통신",
+      "no": "과학기술정보통신부령 제71호",
+      "enforced": "2021-03-31",
+      "version": "20210331",
+      "order": 12
+    }
+  ]
+}
