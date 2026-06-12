@@ -35,6 +35,42 @@
       "enforced": "2021-03-31",
       "version": "20210331",
       "order": 12
+    },
+    {
+      "id": "PIPA_ACT",
+      "file": "laws/PIPA_ACT.md",
+      "title": "개인정보 보호법",
+      "short": "개인정보 보호법",
+      "type": "법률",
+      "category": "개인정보",
+      "no": "법률 제20897호",
+      "enforced": "2025-10-02",
+      "version": "20251002",
+      "order": 20
+    },
+    {
+      "id": "PIPA_DECREE",
+      "file": "laws/PIPA_DECREE.md",
+      "title": "개인정보 보호법 시행령",
+      "short": "개인정보 보호법 시행령",
+      "type": "대통령령",
+      "category": "개인정보",
+      "no": "대통령령 제36340호",
+      "enforced": "2026-05-19",
+      "version": "20260519",
+      "order": 21
+    },
+    {
+      "id": "PIPA_SAFETY_STANDARD",
+      "file": "laws/PIPA_SAFETY_STANDARD.md",
+      "title": "개인정보의 안전성 확보조치 기준",
+      "short": "개인정보의 안전성 확보조치 기준",
+      "type": "행정규칙",
+      "category": "개인정보",
+      "no": "개인정보보호위원회고시 제2025-9호",
+      "enforced": "2025-10-31",
+      "version": "20251031",
+      "order": 22
     }
   ]
 }
