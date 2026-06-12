@@ -262,7 +262,7 @@
     <div class="lawapp-brand"><span class="lawapp-logo">⚖</span><span>법령 통합 검색</span></div>
     <div class="lawapp-searchwrap" id="lawapp-searchwrap">
       <span class="lawapp-search-icon">🔍</span>
-      <input id="lawapp-search" type="text" placeholder="키워드·문장 검색 (예: 침해사고)" autocomplete="off" spellcheck="false" aria-label="법령 검색">
+      <input id="lawapp-search" type="text" placeholder="키워드·문장 검색 (예: 침해사고)" autocomplete="off" spellcheck="false" aria-label="법령 검색" autofocus>
       <button class="lawapp-search-clear" id="lawapp-search-clear" title="지우기" aria-label="검색어 지우기">✕</button>
     </div>
     <div class="lawapp-segment" id="lawapp-segment" role="tablist" aria-label="검색 모드">
@@ -637,7 +637,24 @@ function init(){
   bindResizer();
   var reopen = $('#lawapp-results-reopen');
   if (reopen) reopen.addEventListener('click', function(){ toggleResults(false); });
+  setupAutoFocus();
   loadManifest();
+}
+
+// 진입 시 검색창에 커서를 둔다. 교차출처 iframe에서는 로드시 자동 포커스가 차단될 수 있어,
+// 부모(아임웹)가 iframe.contentWindow.focus()로 프레임에 포커스를 주면 그 시점(window 'focus')에도 다시 시도한다.
+function setupAutoFocus(){
+  var input = $('#lawapp-search');
+  if (!input) return;
+  function focusSearch(){
+    var a = document.activeElement;
+    // 이미 다른 요소(열 내부 등)가 포커스를 갖고 있으면 가로채지 않는다.
+    if (a && a !== document.body && a !== input && a.tagName !== 'IFRAME') return;
+    try { input.focus({ preventScroll:true }); } catch(e){ try { input.focus(); } catch(_){} }
+  }
+  focusSearch();                                    // 로드 직후
+  window.addEventListener('focus', focusSearch);    // 부모가 프레임에 포커스를 줄 때
+  window.addEventListener('pageshow', focusSearch); // 뒤로가기(bfcache) 복귀 시
 }
 
 function loadManifest(){
