@@ -71,6 +71,114 @@
       "enforced": "2025-10-31",
       "version": "20251031",
       "order": 22
+    },
+    {
+      "id": "CI_STANDARD",
+      "file": "laws/CI_STANDARD.md",
+      "title": "연계정보의 생성·처리 등에 관한 기준",
+      "short": "연계정보의 생성·처리 등에 관한 기준",
+      "type": "행정규칙",
+      "category": "정보통신",
+      "no": "방송미디어통신위원회고시 제2026-11호",
+      "enforced": "2026-05-18",
+      "version": "20260518",
+      "order": 40
+    },
+    {
+      "id": "AI_ACT",
+      "file": "laws/AI_ACT.md",
+      "title": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+      "short": "인공지능기본법",
+      "type": "법률",
+      "category": "인공지능",
+      "no": "법률 제21311호",
+      "enforced": "2026-01-22",
+      "version": "20260122",
+      "order": 50
+    },
+    {
+      "id": "AI_DECREE",
+      "file": "laws/AI_DECREE.md",
+      "title": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법 시행령",
+      "short": "인공지능기본법 시행령",
+      "type": "대통령령",
+      "category": "인공지능",
+      "no": "대통령령 제36053호",
+      "enforced": "2026-01-22",
+      "version": "20260122",
+      "order": 51
+    },
+    {
+      "id": "ECOM_ACT",
+      "file": "laws/ECOM_ACT.md",
+      "title": "전자상거래 등에서의 소비자보호에 관한 법률",
+      "short": "전자상거래법",
+      "type": "법률",
+      "category": "전자상거래",
+      "no": "법률 제21312호",
+      "enforced": "2026-01-20",
+      "version": "20260120",
+      "order": 60
+    },
+    {
+      "id": "ECOM_DECREE",
+      "file": "laws/ECOM_DECREE.md",
+      "title": "전자상거래 등에서의 소비자보호에 관한 법률 시행령",
+      "short": "전자상거래법 시행령",
+      "type": "대통령령",
+      "category": "전자상거래",
+      "no": "대통령령 제35257호",
+      "enforced": "2025-02-14",
+      "version": "20250214",
+      "order": 61
+    },
+    {
+      "id": "ECOM_RULE",
+      "file": "laws/ECOM_RULE.md",
+      "title": "전자상거래 등에서의 소비자보호에 관한 법률 시행규칙",
+      "short": "전자상거래법 시행규칙",
+      "type": "총리령",
+      "category": "전자상거래",
+      "no": "총리령 제2013호",
+      "enforced": "2025-02-14",
+      "version": "20250214",
+      "order": 62
+    },
+    {
+      "id": "ISI_ACT",
+      "file": "laws/ISI_ACT.md",
+      "title": "정보보호산업의 진흥에 관한 법률",
+      "short": "정보보호산업법",
+      "type": "법률",
+      "category": "정보보호",
+      "no": "법률 제19990호",
+      "enforced": "2024-07-10",
+      "version": "20240710",
+      "order": 70
+    },
+    {
+      "id": "ISI_DECREE",
+      "file": "laws/ISI_DECREE.md",
+      "title": "정보보호산업의 진흥에 관한 법률 시행령",
+      "short": "정보보호산업법 시행령",
+      "type": "대통령령",
+      "category": "정보보호",
+      "no": "대통령령 제35801호",
+      "enforced": "2025-10-01",
+      "version": "20251001",
+      "order": 71
+    },
+    {
+      "id": "ISI_RULE",
+      "file": "laws/ISI_RULE.md",
+      "title": "정보보호산업의 진흥에 관한 법률 시행규칙",
+      "short": "정보보호산업법 시행규칙",
+      "type": "부령",
+      "category": "정보보호",
+      "no": "과학기술정보통신부령 제116호",
+      "enforced": "2023-10-19",
+      "version": "20231019",
+      "order": 72
     }
   ]
 }

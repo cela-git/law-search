@@ -33,6 +33,7 @@
   --c-mark:#fef08a; --c-mark-cur:#fde047; --c-pulse:#dbeafe; --c-badge:#f1f5f9;
   --c-select:#98FB98;
   --c-danger:#dc2626;
+  --c-future:#b45309; --c-future-bg:#fffbeb;
   --shadow-sm:0 1px 3px rgba(15,23,42,.06); --shadow-md:0 8px 24px rgba(15,23,42,.10);
   --radius:12px; --results-w:312px;
   position:relative; height:var(--lawapp-height); min-height:560px;
@@ -231,6 +232,13 @@
 #lawapp-root ::selection{ background:var(--c-select); color:inherit; }
 #lawapp-root .lawapp-col-body ::selection{ background:var(--c-select); color:inherit; }
 
+/* 시행 예정 조문 (현행과 별개 버전) — 본문에서 색으로 구분 + 변경점 강조 */
+/* 행 사이 세로 여백까지 같은 색으로 메워(box-shadow 위·아래 3px) 흰 줄 없이 연속된 한 덩어리로 보이게 */
+#lawapp-root .lawapp-row.lawapp-future{ background:var(--c-future-bg); box-shadow:0 -3px 0 var(--c-future-bg), 0 3px 0 var(--c-future-bg); }
+#lawapp-root .lawapp-row.lawapp-future.lawapp-article{ border-left-color:var(--c-future); }
+#lawapp-root .lawapp-row.lawapp-future-head::after{ content:'🕒 시행 예정 ' attr(data-si); margin-left:8px; font-size:10.5px; font-weight:700; color:#fff; background:var(--c-future); border-radius:100px; padding:1px 8px; white-space:nowrap; vertical-align:middle; letter-spacing:0; }
+#lawapp-root mark.lawapp-diff{ background:color-mix(in srgb, var(--c-future) 20%, #fff); color:var(--c-future); font-weight:700; border-radius:2px; padding:0 1px; }
+
 /* 목차 오버레이 */
 #lawapp-root .lawapp-toc{ position:absolute; inset:0; background:rgba(255,255,255,.985); z-index:5; display:none; flex-direction:column; }
 #lawapp-root .lawapp-toc.show{ display:flex; }
@@ -245,6 +253,42 @@
 #lawapp-root .lawapp-toc-item.lvl3{ padding-left:40px; color:var(--c-sub); font-size:12.5px; }
 
 #lawapp-root .lawapp-footnote{ flex:0 0 auto; padding:5px 16px; background:var(--c-panel); border-top:1px solid var(--c-border); font-size:11.5px; color:var(--c-sub); text-align:center; }
+
+/* 요약보기 버튼 (상단 바 우측) */
+#lawapp-root .lawapp-summary-btn{ flex:0 0 auto; margin-left:auto; display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border:1px solid var(--c-border-strong); border-radius:9px; background:#fff; font-size:12.5px; font-weight:600; color:var(--c-text); white-space:nowrap; transition:border-color .15s ease, color .15s ease, background .15s ease; }
+#lawapp-root .lawapp-summary-btn:hover{ border-color:var(--c-accent); color:var(--c-accent); background:var(--c-accent-weak); }
+#lawapp-root .lawapp-summary-btn .lawapp-sb-ico{ font-size:13px; line-height:1; }
+
+/* 요약표 모달 */
+#lawapp-root .lawapp-modal{ position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:28px; }
+#lawapp-root .lawapp-modal.show{ display:flex; }
+#lawapp-root .lawapp-modal-backdrop{ position:absolute; inset:0; background:rgba(15,23,42,.45); }
+#lawapp-root .lawapp-modal-box{ position:relative; z-index:1; display:flex; flex-direction:column; width:min(1180px,96vw); max-height:90vh; background:var(--c-panel); border-radius:14px; box-shadow:var(--shadow-md); overflow:hidden; }
+#lawapp-root .lawapp-modal-head{ flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:15px 20px; border-bottom:1px solid var(--c-border); }
+#lawapp-root .lawapp-modal-title{ flex:1 1 auto; font-size:16px; font-weight:700; letter-spacing:-0.02em; color:var(--c-text); }
+#lawapp-root .lawapp-modal-sub{ font-size:11.5px; font-weight:500; color:var(--c-sub); }
+#lawapp-root .lawapp-modal-close{ flex:none; width:30px; height:30px; border-radius:8px; color:var(--c-sub); font-size:20px; line-height:1; display:flex; align-items:center; justify-content:center; }
+#lawapp-root .lawapp-modal-close:hover{ background:var(--c-badge); color:var(--c-danger); }
+#lawapp-root .lawapp-modal-body{ flex:1 1 auto; min-height:0; overflow:auto; }
+#lawapp-root .lawapp-modal-foot{ flex:0 0 auto; padding:10px 20px; border-top:1px solid var(--c-border); font-size:11.5px; color:var(--c-sub); line-height:1.5; }
+#lawapp-root .lawapp-modal-empty{ padding:48px 20px; text-align:center; color:var(--c-sub); font-size:14px; }
+
+/* 요약 테이블 */
+#lawapp-root .lawapp-sumtable{ width:100%; min-width:760px; border-collapse:collapse; font-size:13px; }
+#lawapp-root .lawapp-sumtable th,#lawapp-root .lawapp-sumtable td{ border-bottom:1px solid var(--c-border); padding:10px 12px; text-align:left; vertical-align:top; }
+#lawapp-root .lawapp-sumtable thead th{ position:sticky; top:0; z-index:1; background:var(--c-bg); font-size:12px; font-weight:700; color:var(--c-sub); white-space:nowrap; border-bottom:2px solid var(--c-border-strong); }
+#lawapp-root .lawapp-sumtable tbody tr:hover{ background:var(--c-bg); }
+#lawapp-root .lawapp-sum-fam{ font-weight:700; color:var(--c-text); white-space:nowrap; border-right:1px solid var(--c-border); background:color-mix(in srgb, var(--lawc,var(--c-accent)) 7%, #fff); }
+#lawapp-root .lawapp-sum-famdot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--lawc,#94a3b8); margin-right:7px; vertical-align:middle; }
+#lawapp-root .lawapp-sum-name{ min-width:170px; }
+#lawapp-root .lawapp-sum-open{ font:inherit; font-weight:600; color:var(--c-text); text-align:left; padding:0; border:none; border-bottom:1px dashed transparent; cursor:pointer; }
+#lawapp-root .lawapp-sum-open:hover{ color:var(--lawc,var(--c-accent)); border-bottom-color:var(--lawc,var(--c-accent)); }
+#lawapp-root .lawapp-sum-role{ display:inline-block; padding:1px 8px; border-radius:100px; font-size:11.5px; font-weight:600; color:var(--lawc,var(--c-accent)); background:color-mix(in srgb, var(--lawc,var(--c-accent)) 12%, #fff); white-space:nowrap; }
+#lawapp-root .lawapp-sum-enf{ font-weight:600; color:var(--c-text); white-space:nowrap; }
+#lawapp-root .lawapp-sum-sub{ font-size:11.5px; color:var(--c-sub); margin-top:2px; }
+#lawapp-root .lawapp-sum-upitem{ font-size:12px; color:var(--c-text); }
+#lawapp-root .lawapp-sum-upitem + .lawapp-sum-upitem{ border-top:1px dotted var(--c-border); margin-top:4px; padding-top:4px; }
+#lawapp-root .lawapp-sum-dash{ color:#cbd5e1; }
 
 /* 모바일 (PC 위주, 최소 대응) */
 #lawapp-root .lawapp-results-backdrop{ display:none; }
@@ -271,6 +315,7 @@
       <button type="button" data-mode="phrase" data-tip="문장 포함 — 한 줄에 모든 단어가 들어가면 매칭 (순서 무관)" aria-label="문장 포함">문장</button>
     </div>
     <div class="lawapp-lawbadges" id="lawapp-lawbadges"></div>
+    <button class="lawapp-summary-btn" id="lawapp-summary-btn" title="법령 요약표 보기" aria-label="법령 요약표 보기"><span class="lawapp-sb-ico">📋</span>요약보기</button>
     <div class="lawapp-loading" id="lawapp-loading">법령 불러오는 중 <span id="lawapp-load-count">0/0</span><span class="lawapp-bar"><span id="lawapp-load-fill"></span></span></div>
   </div>
   <div class="lawapp-banner" id="lawapp-banner"></div>
@@ -281,6 +326,17 @@
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
   <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.</div>
+  <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
+    <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
+    <div class="lawapp-modal-box">
+      <div class="lawapp-modal-head">
+        <span class="lawapp-modal-title">정보보호 관련 준수 법률 <span class="lawapp-modal-sub">— 탑재 법령 요약</span></span>
+        <button class="lawapp-modal-close" id="lawapp-summary-close" title="닫기 (Esc)" aria-label="닫기">&times;</button>
+      </div>
+      <div class="lawapp-modal-body" id="lawapp-summary-body"></div>
+      <div class="lawapp-modal-foot">시행일·공포번호는 목록(manifest) 기준, 소관 부처·공포일·개정구분은 법령 원문 기준입니다. ‘시행 예정 법령’·‘비고’는 직접 관리하는 항목으로 최신 여부는 law.go.kr에서 확인하세요. 법률명을 클릭하면 해당 법령이 열로 열립니다.</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -323,11 +379,20 @@ var LAW_STYLE = {
   ICN_RULE:   { abbr:'망칙',   color:'#60a5fa', family:'정보통신망법', sub:'시행규칙' },
   PIPA_ACT:   { abbr:'개보법', color:'#0f766e', family:'개인정보 보호법' },
   PIPA_DECREE:{ abbr:'개보령', color:'#14b8a6', family:'개인정보 보호법', sub:'시행령' },
-  PIPA_SAFETY_STANDARD: { abbr:'안전조치', color:'#d97706', family:'개인정보 보호법', sub:'안전성 확보조치 기준' }
+  PIPA_SAFETY_STANDARD: { abbr:'안전조치', color:'#d97706', family:'개인정보 보호법', sub:'안전성 확보조치 기준' },
+  CI_STANDARD: { abbr:'연계정보', color:'#6366f1', family:'정보통신망법', sub:'연계정보 기준' },
+  AI_ACT:      { abbr:'AI법',   color:'#7c3aed', family:'인공지능기본법' },
+  AI_DECREE:   { abbr:'AI령',   color:'#a78bfa', family:'인공지능기본법', sub:'시행령' },
+  ECOM_ACT:    { abbr:'전상법', color:'#e11d48', family:'전자상거래법' },
+  ECOM_DECREE: { abbr:'전상령', color:'#fb7185', family:'전자상거래법', sub:'시행령' },
+  ECOM_RULE:   { abbr:'전상칙', color:'#fda4af', family:'전자상거래법', sub:'시행규칙' },
+  ISI_ACT:     { abbr:'정산법', color:'#0891b2', family:'정보보호산업법' },
+  ISI_DECREE:  { abbr:'정산령', color:'#22d3ee', family:'정보보호산업법', sub:'시행령' },
+  ISI_RULE:    { abbr:'정산칙', color:'#67e8f9', family:'정보보호산업법', sub:'시행규칙' }
 };
 var FALLBACK_COLORS = ['#2563eb','#0f766e','#d97706','#7c3aed','#dc2626','#0891b2','#4338ca','#15803d'];
 // 분야(카테고리) 대표 색 — 결과 패널의 분야 밴드(ex3)에 사용. 없으면 그 분야 첫 법령 색으로 대체.
-var CATEGORY_STYLE = { '정보통신':'#1d4ed8', '개인정보':'#0f766e' };
+var CATEGORY_STYLE = { '정보통신':'#1d4ed8', '개인정보':'#0f766e', '인공지능':'#7c3aed', '전자상거래':'#e11d48', '정보보호':'#0891b2' };
 
 // ===== __LOGIC_START__ (순수 로직: 파서·검색 — DOM 비의존, 단위 테스트 대상) =====
 
@@ -510,6 +575,129 @@ function parseLaw(md, fallbackId){
   return { meta: meta, rows: rows, toc: toc };
 }
 
+/* ── 시행예정 조문 분석: 같은 조가 연속 2번 나오고 둘째에 [시행일:]이 있으면
+   둘째를 '시행예정 버전'으로 보고 현행과 줄 단위로 비교한다 (DOM 비의존). ── */
+
+// 한 줄에 변경 조각이 이 개수 이상(복잡 개정)이거나, 가운데의 이 비율 이상이 바뀌면(대폭 개정),
+// 잘게 칠하지 않고 '변경 구간 전체를 한 덩어리로' 강조한다 — 반복 단어 슬라이더·잔조각 방지(소폭 개정은 정밀 유지).
+var DIFF_COLLAPSE_FRAGMENTS = 4, DIFF_COLLAPSE_RATIO = 0.6;
+
+// 두 문자열을 비교해 newT에서 '추가/변경된' 글자 구간들을 [[s,e],...]로 반환(정밀 diff).
+// 공통 접두·접미를 떼고 남은 '가운데'만 글자 단위 LCS로 비교 → 실제 바뀐 부분만 표시(한 줄 다중 변경 대응).
+// 인접·근접(공백/조사 1자) 구간은 합치고, 변경이 너무 잘게 흩어지면 위 기준으로 한 덩어리로 묶는다. 가운데가 매우 길면 단일 구간 폴백.
+function diffAddRanges(oldT, newT){
+  if (oldT === newT) return [];
+  var n = oldT.length, m = newT.length, i, j, k;
+  var p = 0, mx = Math.min(n, m);
+  while (p < mx && oldT.charAt(p) === newT.charAt(p)) p++;
+  var oe = n, ne = m;
+  while (oe > p && ne > p && oldT.charAt(oe-1) === newT.charAt(ne-1)){ oe--; ne--; }
+  if (ne <= p) return [];                            // newT에 추가분 없음(순수 삭제)
+  var oldMid = oldT.slice(p, oe), newMid = newT.slice(p, ne);
+  if (!oldMid) return [[p, ne]];                     // 순수 삽입 → 한 구간
+  var A = oldMid.length, B = newMid.length;
+  if (A * B > 1000000) return [[p, ne]];             // 과도하게 큰 가운데는 안전 폴백
+  var dp = []; for (i=0;i<=A;i++) dp.push(new Array(B+1).fill(0));
+  for (i=A-1;i>=0;i--) for (j=B-1;j>=0;j--)
+    dp[i][j] = (oldMid.charAt(i)===newMid.charAt(j)) ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  var ins = []; i=0; j=0;
+  while (i<A && j<B){
+    if (oldMid.charAt(i)===newMid.charAt(j)){ i++; j++; }
+    else if (dp[i+1][j] >= dp[i][j+1]){ i++; }       // old 글자 삭제(표시 안 함)
+    else { ins.push(j); j++; }                       // new 글자 삽입(표시)
+  }
+  while (j<B){ ins.push(j); j++; }
+  if (!ins.length) return [];
+  var MERGE = 2, ranges = [], st = ins[0], pv = ins[0];   // 사이 간격 ≤2(공백/조사 1자)면 한 구간으로 병합
+  for (k=1;k<ins.length;k++){
+    if (ins[k] - pv <= MERGE) pv = ins[k];
+    else { ranges.push([st+p, pv+1+p]); st = ins[k]; pv = ins[k]; }
+  }
+  ranges.push([st+p, pv+1+p]);
+  // 변경 조각이 많거나(복잡 개정) 가운데 상당 부분이 바뀌면(대폭 개정) 잔조각·반복단어 슬라이더를 피해 한 덩어리로
+  var hl = 0; for (k=0;k<ranges.length;k++) hl += ranges[k][1]-ranges[k][0];
+  if (ranges.length >= DIFF_COLLAPSE_FRAGMENTS || hl / (ne - p) >= DIFF_COLLAPSE_RATIO)
+    return [[ranges[0][0], ranges[ranges.length-1][1]]];
+  return ranges;
+}
+
+// 줄 배열 a,b의 LCS 연산열 [{op:'same'|'del'(a)|'ins'(b)}]
+function lcsOps(a, b){
+  var n=a.length, m=b.length, i, j;
+  var dp=[]; for (i=0;i<=n;i++) dp.push(new Array(m+1).fill(0));
+  for (i=n-1;i>=0;i--) for (j=m-1;j>=0;j--)
+    dp[i][j] = (a[i]===b[j]) ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  var ops=[]; i=0; j=0;
+  while (i<n && j<m){
+    if (a[i]===b[j]){ ops.push({op:'same'}); i++; j++; }
+    else if (dp[i+1][j] >= dp[i][j+1]){ ops.push({op:'del', a:i}); i++; }
+    else { ops.push({op:'ins', b:j}); j++; }
+  }
+  while (i<n){ ops.push({op:'del', a:i}); i++; }
+  while (j<m){ ops.push({op:'ins', b:j}); j++; }
+  return ops;
+}
+
+// 현행 줄(aTexts) 대비 시행예정 줄(bTexts)의 변경 표시: bIndex -> {ranges:[...]} | {whole:true}
+// 연속으로 바뀐 줄들은 LCS가 del 묶음·ins 묶음으로 내므로, 한 블록(같은 위치의 교체 구간) 안에서
+// 순서대로(del[i] ↔ ins[i]) 짝지어 비교한다. del보다 많은 ins는 순수 추가 줄(whole).
+function diffFutureLines(aTexts, bTexts){
+  var ops = lcsOps(aTexts, bTexts), mark = {}, dels = [], inss = [], i, t;
+  function flush(){
+    for (t=0; t<inss.length; t++){
+      if (t < dels.length){ var rgs = diffAddRanges(aTexts[dels[t]], bTexts[inss[t]]); mark[inss[t]] = rgs.length ? {ranges:rgs} : {whole:true}; }
+      else mark[inss[t]] = {whole:true};
+    }
+    dels = []; inss = [];
+  }
+  for (i=0;i<ops.length;i++){
+    if (ops[i].op === 'del') dels.push(ops[i].a);
+    else if (ops[i].op === 'ins') inss.push(ops[i].b);
+    else flush();   // 'same' 경계에서 블록 정산
+  }
+  flush();
+  return mark;
+}
+
+// 법령 본문에서 시행예정 조문 블록을 찾아 색칠·diff 정보를 만든다(법령당 1회, L._futureInfo에 캐시).
+// 반환: { rows: { rowIdx: { future:true, si:'2026. 7. 7.', heading?:true, range?:[s,e], whole?:true } } }
+function futureInfo(L){
+  if (!L) return { rows:{} };
+  if (L._futureInfo) return L._futureInfo;
+  var info = { rows:{} }, rows = L.rows || [], i;
+  var siAny = /\[\s*시행일\s*:\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?\s*\]/;
+  var siHead = /^\[\s*시행일\s*:/;
+  var groups = [], cur = null;
+  for (i=0;i<rows.length;i++){
+    var r = rows[i];
+    if (r.kind === 'article'){ cur = { artNo:r.artNo, headIdx:r.idx, body:[], si:null, siIdx:null }; groups.push(cur); }
+    else if (r.isHeading){ cur = null; }                       // 다른 헤딩(절·부칙·별표 등)에서 현재 조문 그룹 종료
+    else if (cur){
+      var sm = r.text.match(siAny);
+      if (sm) cur.si = (+sm[1])+'. '+(+sm[2])+'. '+(+sm[3])+'.';
+      if (siHead.test(r.text)) cur.siIdx = r.idx;              // 단독 [시행일:] 행 → 색칠 대상, diff 본문에선 제외
+      else cur.body.push({ idx:r.idx, text:r.text });
+    }
+  }
+  for (var g=0; g<groups.length; g++){
+    var G = groups[g];
+    if (!G.si) continue;                                       // 시행예정 표시(=[시행일:]) 없는 조문은 건너뜀
+    info.rows[G.headIdx] = { future:true, si:G.si, heading:true };
+    for (var b=0;b<G.body.length;b++) info.rows[G.body[b].idx] = { future:true, si:G.si };
+    if (G.siIdx != null) info.rows[G.siIdx] = { future:true, si:G.si };
+    var prev = groups[g-1];                                    // 직전 같은 조 = 현행 → 줄 단위 비교
+    if (prev && prev.artNo && prev.artNo === G.artNo){
+      var aTexts = []; for (var pa=0;pa<prev.body.length;pa++) aTexts.push(prev.body[pa].text);
+      var bTexts = []; for (var pb=0;pb<G.body.length;pb++) bTexts.push(G.body[pb].text);
+      var mark = diffFutureLines(aTexts, bTexts);
+      for (var bi in mark){ if (!G.body[bi]) continue; var idx = G.body[bi].idx;
+        if (mark[bi].ranges) info.rows[idx].ranges = mark[bi].ranges; else if (mark[bi].whole) info.rows[idx].whole = true; }
+    }
+  }
+  L._futureInfo = info;
+  return info;
+}
+
 // ===== __LOGIC_END__ =====
 
 /* =========================================================================
@@ -556,6 +744,28 @@ function buildHighlightHtml(text, ranges, curRange){
   }
   if (pos < text.length) html += escapeHtml(text.slice(pos));
   return html;
+}
+// 시행예정 조문의 변경 글자 강조 (검색 하이라이트와 다른 색)
+function buildDiffHtml(text, ranges){
+  ranges = mergeRanges(ranges || []);
+  if (!ranges.length) return escapeHtml(text);
+  var html = '', pos = 0;
+  for (var i=0; i<ranges.length; i++){
+    var s = ranges[i][0], e = ranges[i][1];
+    if (s > pos) html += escapeHtml(text.slice(pos, s));
+    html += '<mark class="lawapp-diff">' + escapeHtml(text.slice(s, e)) + '</mark>';
+    pos = e;
+  }
+  if (pos < text.length) html += escapeHtml(text.slice(pos));
+  return html;
+}
+// 검색 하이라이트가 없을 때 한 행의 기본 innerHTML (시행예정 변경점 강조 반영)
+function rowBaseHtml(L, idx){
+  var text = L.rows[idx].text;
+  var f = futureInfo(L).rows[idx];
+  if (f && f.ranges) return buildDiffHtml(text, f.ranges);
+  if (f && f.whole) return buildDiffHtml(text, [[0, text.length]]);
+  return escapeHtml(text);
 }
 function lawDisplay(id){
   var L = state.laws[id];
@@ -635,6 +845,7 @@ function init(){
   bindTopbar();
   bindMode();
   bindResizer();
+  bindSummary();
   var reopen = $('#lawapp-results-reopen');
   if (reopen) reopen.addEventListener('click', function(){ toggleResults(false); });
   setupAutoFocus();
@@ -716,7 +927,7 @@ function loadAllLaws(){
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
       .then(function(md){
         var parsed = parseLaw(md, id);
-        L.meta = parsed.meta; L.rows = parsed.rows; L.toc = parsed.toc; L.loaded = true; L.error = null;
+        L.meta = parsed.meta; L.rows = parsed.rows; L.toc = parsed.toc; L.loaded = true; L.error = null; L._futureInfo = null;
       })
       .catch(function(err){ L.error = (err && err.name === 'AbortError') ? '응답 시간 초과' : (err.message || '로드 실패'); })
       .then(function(){
@@ -961,11 +1172,14 @@ function renderColumnBody(ci){
   }
   if (!L.loaded){ body.innerHTML='<div class="lawapp-col-loading">법령을 불러오는 중…</div>'; return; }
 
+  var fi = futureInfo(L);
   var html = '';
   for (var i=0; i<L.rows.length; i++){
     var r = L.rows[i];
     var indCls = (r.kind === 'body' && r.indent) ? (' lawapp-ind'+r.indent) : '';   // 항·호·목 내어쓰기
-    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+'>'+escapeHtml(r.text)+'</div>';
+    var f = fi.rows[r.idx], futCls = '', siAttr = '';
+    if (f && f.future){ futCls = ' lawapp-future'; if (f.heading){ futCls += ' lawapp-future-head'; siAttr = ' data-si="'+escapeHtml(f.si)+'"'; } }
+    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+'</div>';
   }
   body.innerHTML = html;
 }
@@ -976,7 +1190,7 @@ function retryLaw(id){
   state.columns.forEach(function(col,ci){ if(col.lawId===id) renderColumnBody(ci); });
   fetchWithTimeout(urlFor(L.manifestMeta.file) + '?v=' + encodeURIComponent(L.manifestMeta.version||'') + '&r=1', { cache:'default' })
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-    .then(function(md){ var p=parseLaw(md,id); L.meta=p.meta; L.rows=p.rows; L.toc=p.toc; L.loaded=true; L.error=null; })
+    .then(function(md){ var p=parseLaw(md,id); L.meta=p.meta; L.rows=p.rows; L.toc=p.toc; L.loaded=true; L.error=null; L._futureInfo=null; })
     .catch(function(err){ L.error = (err && err.name === 'AbortError') ? '응답 시간 초과' : (err.message || '로드 실패'); })
     .then(function(){
       state.columns.forEach(function(col,ci){ if(col.lawId===id){ renderColumnBody(ci); computeColumnMatches(ci); refreshColumnMatchNav(ci); applyColumnHighlights(ci); } });
@@ -1256,7 +1470,10 @@ function renderLawBadges(){
   if (!state.order.length) return;
   var searching = !!state.query.phraseNorm;
   var label = el('span','lawapp-badges-label'); label.textContent = '열기:'; wrap.appendChild(label);
-  state.order.forEach(function(id){
+  // 배지 순서 = 요약표와 동일하게 분야(family)별로 묶어 표시 (manifest order 그대로가 아니라 그룹 순서)
+  var orderedIds = [];
+  summaryGroups().forEach(function(g){ for (var gi=0; gi<g.ids.length; gi++) orderedIds.push(g.ids[gi]); });
+  orderedIds.forEach(function(id){
     var open = findColumnWithLaw(id) !== -1;
     var total = searching ? (state.resultTotals[id] || 0) : null;
     var cls = 'lawapp-lawbadge ' + (open ? 'on' : 'off');
@@ -1274,6 +1491,153 @@ function renderLawBadges(){
     if (searching){ var c = el('span','lawapp-lawbadge-cnt'); c.textContent = total || 0; b.appendChild(c); }
     b.addEventListener('click', function(){ toggleLawColumn(id); });
     wrap.appendChild(b);
+  });
+}
+
+/* =========================================================================
+   법령 요약표 (상단 '요약보기' 모달)
+   ========================================================================= */
+// type(공포 형식) → 상하위법 역할 표기로 정규화: 법률 / 시행령 / 시행규칙 / 행정규칙.
+function hierRole(type){
+  type = String(type||'').trim();
+  if (type === '법률') return '법률';
+  if (type === '대통령령') return '시행령';
+  if (/(총리령|부령)$/.test(type)) return '시행규칙';
+  if (type === '행정규칙' || /(고시|훈령|예규|규정|지침)/.test(type)) return '행정규칙';
+  return type || '-';
+}
+
+// '현재 시행 법령' 칸: 시행일(굵게) + 공포번호·공포일·개정구분(아래 회색).
+function currentLawCell(mm, meta){
+  mm = mm || {}; meta = meta || {};
+  var enf = mm.enforced || meta.enforced || '';
+  var no  = mm.no || meta.no || '';
+  var ann = meta.announced || '';
+  var rev = meta.revision || '';
+  var top = enf ? '<div class="lawapp-sum-enf">시행 ' + escapeHtml(fmtDate(enf)) + '</div>' : '';
+  var sub = [];
+  if (no)  sub.push(escapeHtml(no));
+  if (ann) sub.push(escapeHtml(fmtDate(ann)));
+  if (rev) sub.push(escapeHtml(rev));
+  var bottom = sub.length ? '<div class="lawapp-sum-sub">' + sub.join(', ') + '</div>' : '';
+  return (top + bottom) || '<span class="lawapp-sum-dash">-</span>';
+}
+
+// '시행 예정 법령'처럼 여러 줄을 담는 칸(배열). 비면 '-'.
+function multiCell(arr){
+  arr = (arr || []).filter(Boolean);
+  if (!arr.length) return '<span class="lawapp-sum-dash">-</span>';
+  return arr.map(function(s){ return '<div class="lawapp-sum-upitem">' + escapeHtml(s) + '</div>'; }).join('');
+}
+
+// MD 프런트매터 upcoming(한 줄, ' | '로 구분) → 배열. 필드가 없으면 빈 배열.
+function parseUpcoming(val){
+  if (!val) return [];
+  return String(val).split('|').map(function(s){ return s.trim(); }).filter(Boolean);
+}
+
+// 오늘(자정 기준) Date — 시행일 비교용. 사용자 브라우저의 현재 날짜를 따른다(시간이 지나면 결과가 자동 갱신).
+function todayStart(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+
+// 본문의 "[시행일: YYYY. M. D.]" 마커에서 '오늘 이후' 시행일을 날짜별로 묶는다(시행일 오름차순).
+// 반환: [{ ymd:'2026. 10. 1.', dt:Date, arts:['제45조', …] }]
+function autoUpcoming(L){
+  if (!L || !L.rows) return [];
+  var t0 = todayStart().getTime();
+  var re = /\[\s*시행일\s*:\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?\s*\]\s*(.*)$/;
+  var byKey = {}, keys = [];
+  for (var i=0; i<L.rows.length; i++){
+    var m = L.rows[i].text.match(re);
+    if (!m) continue;
+    var y = +m[1], mo = +m[2], da = +m[3];
+    var dt = new Date(y, mo-1, da); dt.setHours(0,0,0,0);
+    if (!(dt.getTime() > t0)) continue;                  // 과거·오늘은 '시행 예정'이 아님 → 제외
+    var key = y+'-'+mo+'-'+da;
+    if (!byKey[key]){ byKey[key] = { dt:dt, ymd:(y+'. '+mo+'. '+da+'.'), arts:[] }; keys.push(key); }
+    var art = (m[4]||'').trim();                          // 마커 뒤 적용 조문(예: 제45조의3)
+    if (art && byKey[key].arts.indexOf(art) === -1) byKey[key].arts.push(art);
+  }
+  return keys.map(function(k){ return byKey[k]; }).sort(function(a,b){ return a.dt - b.dt; });
+}
+
+// autoUpcoming → 표 셀 문자열 배열. 예: "시행 2026. 10. 1. · 제45조 외 20개 조문"
+function autoUpcomingLines(L){
+  return autoUpcoming(L).map(function(g){
+    var tail = '';
+    if (g.arts.length === 1) tail = ' · ' + g.arts[0];
+    else if (g.arts.length > 1) tail = ' · ' + g.arts[0] + ' 외 ' + (g.arts.length-1) + '개 조문';
+    return '시행 ' + g.ymd + tail;
+  });
+}
+
+// 탑재 법령을 '구분(family)'으로 묶어 manifest order 순으로 반환.
+function summaryGroups(){
+  var groups = [], byFam = {};
+  state.order.forEach(function(id){
+    var fam = lawParts(id).family || lawDisplay(id);
+    if (!byFam[fam]){ byFam[fam] = { family: fam, ids: [] }; groups.push(byFam[fam]); }
+    byFam[fam].ids.push(id);
+  });
+  return groups;
+}
+
+function buildSummaryHtml(){
+  var groups = summaryGroups();
+  if (!groups.length) return '<div class="lawapp-modal-empty">표시할 법령이 없습니다. 법령을 불러온 뒤 다시 열어주세요.</div>';
+  var h = '<table class="lawapp-sumtable"><thead><tr>'
+        + '<th>법률 구분</th><th>법률</th><th>상하위법</th><th>소관 부처</th>'
+        + '<th>현재 시행 법령</th><th>시행 예정 법령</th>'
+        + '</tr></thead><tbody>';
+  groups.forEach(function(g){
+    g.ids.forEach(function(id, gi){
+      var L = state.laws[id] || {};
+      var mm = L.manifestMeta || {}, meta = L.meta || {};
+      var title = mm.title || meta.title || id;
+      h += '<tr style="--lawc:' + lawColor(id) + '">';
+      if (gi === 0){
+        h += '<td class="lawapp-sum-fam" rowspan="' + g.ids.length + '">'
+           + '<span class="lawapp-sum-famdot"></span>' + escapeHtml(g.family) + '</td>';
+      }
+      h += '<td class="lawapp-sum-name"><button type="button" class="lawapp-sum-open" data-id="'
+         + escapeHtml(id) + '">' + escapeHtml(title) + '</button></td>';
+      h += '<td><span class="lawapp-sum-role">' + escapeHtml(hierRole(mm.type || meta.type)) + '</span></td>';
+      h += '<td>' + escapeHtml(meta.authority || '-') + '</td>';
+      h += '<td>' + currentLawCell(mm, meta) + '</td>';
+      var upLines = parseUpcoming(meta.upcoming);          // 수동 upcoming 우선
+      if (!upLines.length) upLines = autoUpcomingLines(L);  // 없으면 본문 [시행일:]에서 자동 추출
+      h += '<td>' + multiCell(upLines) + '</td>';
+      h += '</tr>';
+    });
+  });
+  h += '</tbody></table>';
+  return h;
+}
+
+function openSummary(){
+  var body = $('#lawapp-summary-body');
+  if (body) body.innerHTML = buildSummaryHtml();
+  var m = $('#lawapp-summary-modal');
+  if (m) m.classList.add('show');
+}
+function closeSummary(){
+  var m = $('#lawapp-summary-modal');
+  if (m) m.classList.remove('show');
+}
+function bindSummary(){
+  var btn = $('#lawapp-summary-btn');
+  if (btn) btn.addEventListener('click', openSummary);
+  var close = $('#lawapp-summary-close');
+  if (close) close.addEventListener('click', closeSummary);
+  var back = $('#lawapp-summary-backdrop');
+  if (back) back.addEventListener('click', closeSummary);
+  var m = $('#lawapp-summary-modal');
+  if (m) m.addEventListener('click', function(e){
+    // 표 안의 법률명 클릭 → 그 법령을 열로 열고 모달 닫기
+    var open = e.target && e.target.closest ? e.target.closest('.lawapp-sum-open') : null;
+    if (open){ var id = open.getAttribute('data-id'); closeSummary(); openLaw(id); }
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && m && m.classList.contains('show')) closeSummary();
   });
 }
 
@@ -1331,7 +1695,7 @@ function applyColumnHighlights(ci){
   Array.prototype.forEach.call(body.querySelectorAll('.lawapp-row.lawapp-hled'), function(rowEl){
     var idx = +rowEl.getAttribute('data-line');
     var L0 = state.laws[col.lawId];
-    if (L0 && L0.rows[idx]) rowEl.innerHTML = escapeHtml(L0.rows[idx].text);
+    if (L0 && L0.rows[idx]) rowEl.innerHTML = rowBaseHtml(L0, idx);
     rowEl.classList.remove('lawapp-hled');
   });
   if (!col.lawId || !state.query.phraseNorm || !col.rowRanges) return;
@@ -1504,6 +1868,9 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     computeResults: computeResults, setQuery: setQuery, setSearchMode: setSearchMode, toggleResults: toggleResults,
     openResult: openResult, openLaw: openLaw, toggleLawColumn: toggleLawColumn, closeColumn: closeColumn,
     findColumnWithLaw: findColumnWithLaw, lawColor: lawColor, lawAbbr: lawAbbr,
+    openSummary: openSummary, closeSummary: closeSummary, buildSummaryHtml: buildSummaryHtml, hierRole: hierRole,
+    autoUpcoming: autoUpcoming, autoUpcomingLines: autoUpcomingLines,
+    futureInfo: futureInfo, diffFutureLines: diffFutureLines, diffAddRanges: diffAddRanges,
     setColumns: function(ids){ state.columns = (ids||[]).filter(function(id){ return state.laws[id]; }).map(function(id){ return newColumn(id); }); renderColumns(); renderLawBadges(); saveUiState(); },
     CONFIG: CONFIG
   };

@@ -1,0 +1,21 @@
+# GitHub Pages에 올릴 필요가 없는 개발/도구 파일 (git CLI로 올릴 때 자동 제외)
+.cluade/
+node_modules/
+tests/
+samples/
+# 법령 원본·변환 작업 폴더 (배포 대상 아님). '#' 시작이라 \로 이스케이프.
+\#. 법령 생성 프롬프트/
+법령검색서비스_상세계획서.md
+법령MD변환_프롬프트.md
+package-lock.json
+package.json
+README.md
+memo.md
+*.log
+
+# === GitHub Pages 배포에 실제로 올라가는 파일 ===
+#   index.html          (앱)
+#   manifest.json       (법령 목록)
+#   .nojekyll           (필수)
+#   laws/*.md           (법령 본문)
+#   README.md / *.md    (문서 — 올려도 무방, 서비스에는 영향 없음)

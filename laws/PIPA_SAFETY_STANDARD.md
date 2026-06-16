@@ -8,7 +8,7 @@ announced: 2025-10-31
 enforced: 2025-10-31
 revision: 일부개정
 authority: 개인정보보호위원회
-source: https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%EC%9D%98%EC%95%88%EC%A0%84%EC%84%B1%ED%99%95%EB%B3%B4%EC%A1%B0%EC%B9%98%EA%B8%B0%EC%A4%80
+source: https://www.law.go.kr/행정규칙/개인정보의안전성확보조치기준
 converted: 2026-06-12
 ---
 ## 제1장 총칙
