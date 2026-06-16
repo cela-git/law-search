@@ -85,7 +85,7 @@
 #lawapp-root .lawapp-lawbadges{ flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 #lawapp-root .lawapp-badges-label{ font-size:11.5px; color:var(--c-sub); font-weight:600; margin-right:1px; white-space:nowrap; }
 /* === 분야(family) 그룹 캡슐 배지: 접힘=테두리 원 스택 / 펼침=테두리 타원으로 모핑 === */
-#lawapp-root .lawapp-cap{ display:inline-flex; align-items:center; border:1px solid var(--c-border); background:#fff; border-radius:999px; padding:4px 9px; min-height:34px; box-sizing:border-box; cursor:pointer; transition:background .3s ease, border-color .3s ease; }
+#lawapp-root .lawapp-cap{ display:inline-flex; align-items:center; border:1px solid var(--c-border); background:#fff; border-radius:999px; padding:3px 9px; min-height:30px; box-sizing:border-box; cursor:pointer; transition:background .3s ease, border-color .3s ease; }
 #lawapp-root .lawapp-cap.open{ background:color-mix(in srgb, var(--gc) 6%, #fff); border-color:color-mix(in srgb, var(--gc) 22%, #fff); cursor:default; }
 #lawapp-root .lawapp-cap:not(.open) .lawapp-mbadge{ pointer-events:none; }
 #lawapp-root .lawapp-lead{ display:inline-flex; align-items:center; gap:4px; border:0; background:none; cursor:pointer; font:inherit; font-size:12px; font-weight:800; color:var(--c-sub); white-space:nowrap; padding:0; letter-spacing:-.02em; }
@@ -95,22 +95,22 @@
 #lawapp-root .lawapp-lead:focus-visible, #lawapp-root .lawapp-mbadge:focus-visible{ outline:2px solid var(--c-accent); outline-offset:2px; }
 #lawapp-root .lawapp-mem{ display:inline-flex; align-items:center; padding-left:4px; }
 /* 멤버 = 테두리 알약. 접힘=정원(min-width) / 펼침=타원(min-width 해제 + 나머지 글자 reveal) */
-#lawapp-root .lawapp-mbadge{ position:relative; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer; background:#fff; border:1.5px solid var(--c); color:var(--c); border-radius:999px; min-width:24px; height:24px; padding:0; margin-left:-7px; box-shadow:0 0 0 2px #fff; transition:min-width .32s cubic-bezier(.22,.61,.36,1), margin-left .32s cubic-bezier(.22,.61,.36,1), padding .32s cubic-bezier(.22,.61,.36,1), background .22s ease, color .22s ease; }
+#lawapp-root .lawapp-mbadge{ position:relative; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer; background:#fff; border:1.5px solid var(--c); color:var(--c); border-radius:999px; min-width:21px; height:21px; padding:0; margin-left:-7px; box-shadow:0 0 0 2px #fff; transition:min-width .32s cubic-bezier(.22,.61,.36,1), margin-left .32s cubic-bezier(.22,.61,.36,1), padding .32s cubic-bezier(.22,.61,.36,1), background .22s ease, color .22s ease; }
 #lawapp-root .lawapp-mem .lawapp-mbadge:first-child{ margin-left:0; }
 #lawapp-root .lawapp-mbadge.on{ background:var(--c); color:#fff; }
 #lawapp-root .lawapp-cap.open .lawapp-mbadge{ min-width:0; margin-left:3px; padding:0 7px; box-shadow:none; }
 #lawapp-root .lawapp-cap.open .lawapp-mem .lawapp-mbadge:first-child{ margin-left:0; }
-#lawapp-root .lawapp-mch{ flex:none; font-size:10.5px; font-weight:800; line-height:1; }
+#lawapp-root .lawapp-mch{ flex:none; font-size:10px; font-weight:800; line-height:1; }
 #lawapp-root .lawapp-mrest{ display:grid; grid-template-columns:0fr; transition:grid-template-columns .32s cubic-bezier(.22,.61,.36,1); }
 #lawapp-root .lawapp-cap.open .lawapp-mrest{ grid-template-columns:1fr; }
 #lawapp-root .lawapp-mrest-in{ min-width:0; overflow:hidden; }
-#lawapp-root .lawapp-mrest-in > span{ display:block; white-space:nowrap; font-size:10.5px; font-weight:800; line-height:1; opacity:0; transition:opacity .22s ease .04s; }
+#lawapp-root .lawapp-mrest-in > span{ display:block; white-space:nowrap; font-size:10px; font-weight:800; line-height:1; opacity:0; transition:opacity .22s ease .04s; }
 #lawapp-root .lawapp-cap.open .lawapp-mrest-in > span{ opacity:1; }
 /* 배지 풀네임 빠른 커스텀 툴팁 (세그먼트와 동일, 배지 아래 중앙 정렬) */
 #lawapp-root .lawapp-lawbadge[data-tip]::after{ content:attr(data-tip); position:absolute; top:calc(100% + 7px); left:50%; z-index:50; width:max-content; max-width:260px; white-space:nowrap; text-align:center; background:#0f172a; color:#fff; font-size:11.5px; font-weight:500; line-height:1.45; letter-spacing:-0.01em; padding:5px 9px; border-radius:7px; box-shadow:0 6px 16px rgba(15,23,42,.20); opacity:0; visibility:hidden; transform:translate(-50%,-2px); transition:opacity .1s ease, transform .1s ease, visibility .1s ease; transition-delay:.04s; pointer-events:none; }
 #lawapp-root .lawapp-lawbadge[data-tip]:hover::after{ opacity:1; visibility:visible; transform:translate(-50%,0); }
 /* 검색 중: 각 법령 배지 우측 상단 모서리에 작은 결과수 배지(알림 배지형). 0건은 배지 숨김+흐림. 간격은 기존 그대로 유지. */
-#lawapp-root .lawapp-mcnt{ position:absolute; top:-7px; right:-6px; min-width:15px; height:15px; padding:0 3px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; color:#fff; background:var(--c); border:1.5px solid #fff; border-radius:100px; box-shadow:0 1px 2px rgba(15,23,42,.25); z-index:3; pointer-events:none; }
+#lawapp-root .lawapp-mcnt{ position:absolute; top:-6px; right:-5px; min-width:14px; height:14px; padding:0 3px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; color:#fff; background:var(--c); border:1.5px solid #fff; border-radius:100px; box-shadow:0 1px 2px rgba(15,23,42,.25); z-index:3; pointer-events:none; }
 #lawapp-root .lawapp-mbadge.zero{ opacity:.4; }
 
 #lawapp-root .lawapp-loading{ flex-basis:100%; font-size:13px; color:var(--c-sub); display:none; }
@@ -147,12 +147,8 @@
 #lawapp-root .lawapp-results-scroll{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:4px 0 10px; }
 
 /* 법령별 바로가기 칩 (누르면 아래 결과 목록에서 그 법령 위치로 점프) */
-#lawapp-root .lawapp-results-jump{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:5px; padding:8px 12px; border-bottom:1px solid var(--c-border); background:var(--c-bg); }
-#lawapp-root .lawapp-jump-chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px 3px 8px; border:1px solid var(--c-border); border-radius:100px; background:#fff; font-size:11.5px; font-weight:600; color:var(--c-text); cursor:pointer; transition:all .12s ease; max-width:100%; }
-#lawapp-root .lawapp-jump-chip:hover{ border-color:var(--lawc,var(--c-accent)); background:color-mix(in srgb, var(--lawc,var(--c-accent)) 7%, #fff); }
-#lawapp-root .lawapp-jump-dot{ width:7px; height:7px; border-radius:50%; background:var(--lawc,#94a3b8); flex:none; }
-#lawapp-root .lawapp-jump-nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-#lawapp-root .lawapp-jump-cnt{ font-size:10.5px; font-weight:700; color:var(--lawc,var(--c-sub)); flex:none; }
+#lawapp-root .lawapp-results-jump{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:8px; padding:11px 12px; border-bottom:1px solid var(--c-border); background:var(--c-bg); }
+/* 점프 칩은 배지바와 동일한 분야 그룹 캡슐(.lawapp-cap / .lawapp-mbadge / .lawapp-mcnt)을 그대로 재사용 — 별도 칩 스타일 없음 */
 
 /* 분야 밴드 (상위 1단계, sticky) */
 #lawapp-root .lawapp-field-head{ position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:8px; padding:7px 14px; font-size:12px; font-weight:700; color:var(--fc,#475569); background:color-mix(in srgb, var(--fc,#475569) 8%, #fff); }
@@ -1407,22 +1403,59 @@ function renderResults(){
     scroll.appendChild(field);
   });
 
-  // 법령별 바로가기 칩 채우기 (법령이 2개 이상일 때만 노출)
+  // 법령별 바로가기 — 배지바와 통일(분야 그룹 캡슐: 접힘=원+코너 결과수 / 펼침=타원). 결과 있는 법령만, 2개 이상일 때 노출.
   if (jumpItems.length > 1){
-    jumpItems.forEach(function(it){
-      var chip = el('button','lawapp-jump-chip');
-      chip.setAttribute('data-jump', it.lawId);
-      chip.style.setProperty('--lawc', lawColor(it.lawId));
-      chip.title = lawDisplay(it.lawId) + '로 이동';
-      var d = el('span','lawapp-jump-dot');
-      var n = el('span','lawapp-jump-nm'); n.textContent = lawDisplay(it.lawId);
-      var c = el('span','lawapp-jump-cnt'); c.textContent = it.total;
-      chip.appendChild(d); chip.appendChild(n); chip.appendChild(c);
-      chip.addEventListener('click', function(){
-        var r1 = it.headEl.getBoundingClientRect(), r0 = scroll.getBoundingClientRect();
-        scroll.scrollTop += (r1.top - r0.top) - 30;   // 분야 sticky 밴드 아래로
+    var jmap = {}; jumpItems.forEach(function(it){ jmap[it.lawId] = it; });
+    summaryGroups().forEach(function(g, gi){
+      var ids = g.ids.filter(function(id){ return jmap[id]; });
+      if (!ids.length) return;
+      var head = lawGroupHead(g);
+      var expanded = !!jumpExpanded[g.family];
+      var cap = el('div', 'lawapp-cap' + (expanded ? ' open' : ''));
+      cap.style.setProperty('--gc', lawColor(head));
+      var memId = 'lawapp-jmem-' + gi;
+      var lead = el('button', 'lawapp-lead'); lead.type = 'button';
+      lead.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      lead.setAttribute('aria-controls', memId);
+      var gdot = el('span', 'lawapp-gdot'); gdot.setAttribute('aria-hidden', 'true');
+      var gab = el('span', 'lawapp-gab'); gab.textContent = lawAbbr(head);
+      lead.appendChild(gdot); lead.appendChild(gab);
+      var mem = el('div', 'lawapp-mem'); mem.id = memId;
+      var members = [];
+      ids.forEach(function(id){
+        var it = jmap[id];
+        var b = el('button', 'lawapp-jump-chip lawapp-mbadge'); b.type = 'button';
+        b.setAttribute('data-jump', id);
+        b.style.setProperty('--c', lawColor(id));
+        b.title = lawDisplay(id) + '로 이동';
+        b.setAttribute('aria-label', lawDisplay(id) + '로 이동');
+        b.tabIndex = expanded ? 0 : -1;
+        if (!expanded) b.setAttribute('aria-hidden', 'true');
+        var abbr = lawAbbr(id);
+        var ch = el('span', 'lawapp-mch'); ch.textContent = abbr.slice(0, 1);
+        var rest = el('span', 'lawapp-mrest'); rest.setAttribute('aria-hidden', 'true');
+        var restIn = el('span', 'lawapp-mrest-in'); var rs = el('span'); rs.textContent = abbr.slice(1);
+        restIn.appendChild(rs); rest.appendChild(restIn);
+        var mc = el('span', 'lawapp-mcnt'); mc.textContent = it.total;   // 우측 상단 결과수
+        b.appendChild(ch); b.appendChild(rest); b.appendChild(mc);
+        b.addEventListener('click', function(e){
+          e.stopPropagation();
+          if (!cap.classList.contains('open')){ setJExp(true); return; }   // 접힘이면 펼치기만
+          var r1 = it.headEl.getBoundingClientRect(), r0 = scroll.getBoundingClientRect();
+          scroll.scrollTop += (r1.top - r0.top) - 30;   // 분야 sticky 밴드 아래로 점프
+        });
+        members.push(b); mem.appendChild(b);
       });
-      jump.appendChild(chip);
+      function setJExp(op){
+        jumpExpanded[g.family] = op;
+        cap.classList.toggle('open', op);
+        lead.setAttribute('aria-expanded', op ? 'true' : 'false');
+        members.forEach(function(m){ m.tabIndex = op ? 0 : -1; if (op) m.removeAttribute('aria-hidden'); else m.setAttribute('aria-hidden', 'true'); });
+      }
+      cap.addEventListener('click', function(){ if (!cap.classList.contains('open')) setJExp(true); });
+      lead.addEventListener('click', function(e){ e.stopPropagation(); setJExp(!cap.classList.contains('open')); });
+      cap.appendChild(lead); cap.appendChild(mem);
+      jump.appendChild(cap);
     });
   } else {
     jump.style.display = 'none';
@@ -1477,8 +1510,10 @@ function excerptHtml(text, ranges){
 /* =========================================================================
    법령별 토글 배지 (열 = 켜진 배지) + 상단 메타
    ========================================================================= */
-// 배지 그룹 펼침 상태(분야 family → true). 재렌더 사이 유지. 검색 중엔 전체 강제 펼침.
+// 배지 그룹 펼침 상태(분야 family → true). 재렌더 사이 유지.
 var lawBadgeExpanded = {};
+// 검색 결과 점프 칩(배지바와 동일한 그룹 캡슐)의 펼침 상태. renderResults 재렌더 사이 유지.
+var jumpExpanded = {};
 function lawGroupHead(g){
   for (var k=0; k<g.ids.length; k++){ if (!lawParts(g.ids[k]).sub) return g.ids[k]; }
   return g.ids[0];
