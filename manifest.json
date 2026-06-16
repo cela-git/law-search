@@ -37,6 +37,18 @@
       "order": 12
     },
     {
+      "id": "CI_STANDARD",
+      "file": "laws/CI_STANDARD.md",
+      "title": "연계정보의 생성·처리 등에 관한 기준",
+      "short": "연계정보의 생성·처리 등에 관한 기준",
+      "type": "행정규칙",
+      "category": "정보통신",
+      "no": "방송미디어통신위원회고시 제2026-11호",
+      "enforced": "2026-05-18",
+      "version": "20260518",
+      "order": 13
+    },
+    {
       "id": "PIPA_ACT",
       "file": "laws/PIPA_ACT.md",
       "title": "개인정보 보호법",
@@ -70,19 +82,7 @@
       "no": "개인정보보호위원회고시 제2025-9호",
       "enforced": "2025-10-31",
       "version": "20251031",
-      "order": 22
-    },
-    {
-      "id": "CI_STANDARD",
-      "file": "laws/CI_STANDARD.md",
-      "title": "연계정보의 생성·처리 등에 관한 기준",
-      "short": "연계정보의 생성·처리 등에 관한 기준",
-      "type": "행정규칙",
-      "category": "정보통신",
-      "no": "방송미디어통신위원회고시 제2026-11호",
-      "enforced": "2026-05-18",
-      "version": "20260518",
-      "order": 40
+      "order": 30
     },
     {
       "id": "AI_ACT",
@@ -145,6 +145,42 @@
       "order": 62
     },
     {
+      "id": "LBS_ACT",
+      "file": "laws/LBS_ACT.md",
+      "title": "위치정보의 보호 및 이용 등에 관한 법률",
+      "short": "위치정보법",
+      "type": "법률",
+      "category": "위치정보",
+      "no": "법률 제21066호",
+      "enforced": "2025-10-01",
+      "version": "20251001",
+      "order": 70
+    },
+    {
+      "id": "LBS_DECREE",
+      "file": "laws/LBS_DECREE.md",
+      "title": "위치정보의 보호 및 이용 등에 관한 법률 시행령",
+      "short": "위치정보법 시행령",
+      "type": "대통령령",
+      "category": "위치정보",
+      "no": "대통령령 제36084호",
+      "enforced": "2026-02-10",
+      "version": "20260210",
+      "order": 71
+    },
+    {
+      "id": "LBS_PROTECTION_STANDARD",
+      "file": "laws/LBS_PROTECTION_STANDARD.md",
+      "title": "위치정보의 관리적·기술적 보호조치 기준",
+      "short": "위치정보의 관리적·기술적 보호조치 기준",
+      "type": "행정규칙",
+      "category": "위치정보",
+      "no": "방송미디어통신위원회고시 제2026-11호",
+      "enforced": "2026-05-18",
+      "version": "20260518",
+      "order": 72
+    },
+    {
       "id": "ISI_ACT",
       "file": "laws/ISI_ACT.md",
       "title": "정보보호산업의 진흥에 관한 법률",
@@ -154,7 +190,7 @@
       "no": "법률 제19990호",
       "enforced": "2024-07-10",
       "version": "20240710",
-      "order": 70
+      "order": 80
     },
     {
       "id": "ISI_DECREE",
@@ -166,7 +202,7 @@
       "no": "대통령령 제35801호",
       "enforced": "2025-10-01",
       "version": "20251001",
-      "order": 71
+      "order": 81
     },
     {
       "id": "ISI_RULE",
@@ -178,7 +214,7 @@
       "no": "과학기술정보통신부령 제116호",
       "enforced": "2023-10-19",
       "version": "20231019",
-      "order": 72
+      "order": 82
     }
   ]
 }
