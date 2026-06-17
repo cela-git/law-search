@@ -211,6 +211,19 @@
 #lawapp-root .lawapp-sctoggle.c[aria-pressed="true"]{ color:#fff; background:#ea580c; }
 #lawapp-root .lawapp-sctoggle.g[aria-pressed="true"]{ color:#fff; background:#0d9488; }
 #lawapp-root .lawapp-sctoggle:focus-visible{ outline:2px solid var(--c-accent); outline-offset:2px; }
+/* 위임조문 연계(법↔영↔고시) — 본문 인용 역참조로 연결, 위임표현/인용이 있는 그 줄 끝에 인라인 표시 */
+#lawapp-root .lawapp-xref{ display:inline; margin-left:7px; font-size:11px; font-weight:500; color:var(--c-sub); }
+#lawapp-root .lawapp-xref + .lawapp-xref{ margin-left:10px; }
+#lawapp-root .lawapp-xref-lead{ color:var(--c-sub); font-weight:700; margin-right:3px; white-space:nowrap; }
+#lawapp-root .lawapp-xref.down .lawapp-xref-lead{ color:var(--c-accent); }
+#lawapp-root .lawapp-xref-role{ color:var(--c-sub); font-weight:600; margin-right:1px; }
+#lawapp-root .lawapp-xlink{ display:inline; position:relative; border:0; background:none; padding:0 1px; margin:0; font:inherit; color:var(--c-accent); font-weight:600; cursor:pointer; }
+#lawapp-root .lawapp-xlink:hover{ text-decoration:underline; }
+#lawapp-root .lawapp-xlink:focus-visible{ outline:2px solid var(--c-accent); outline-offset:1px; border-radius:3px; }
+#lawapp-root .lawapp-xref .sep{ color:var(--c-border-strong); margin:0 3px; }
+#lawapp-root .lawapp-xref-more{ color:var(--c-sub); font-weight:500; }
+#lawapp-root .lawapp-xlink[data-tip]::after{ content:attr(data-tip); position:absolute; top:calc(100% + 6px); left:0; z-index:50; width:max-content; max-width:240px; white-space:normal; text-align:left; background:#0f172a; color:#fff; font-size:11px; font-weight:500; line-height:1.45; letter-spacing:-0.01em; padding:5px 8px; border-radius:7px; box-shadow:0 6px 16px rgba(15,23,42,.20); opacity:0; visibility:hidden; transform:translateY(-2px); transition:opacity .1s ease, transform .1s ease, visibility .1s ease; transition-delay:.04s; pointer-events:none; }
+#lawapp-root .lawapp-xlink[data-tip]:hover::after{ opacity:1; visibility:visible; transform:translateY(0); }
 /* 대상 필터 동작: 켜진 대상(C/G) 조문만 본문·목차에서 표시 */
 #lawapp-root.lawapp-fc .lawapp-col-body .lawapp-row,
 #lawapp-root.lawapp-fg .lawapp-col-body .lawapp-row,
@@ -886,6 +899,7 @@ function init(){
   bindResizer();
   bindSummary();
   bindScopeFilter();
+  bindXrefLinks();
   var reopen = $('#lawapp-results-reopen');
   if (reopen) reopen.addEventListener('click', function(){ toggleResults(false); });
   setupAutoFocus();
@@ -923,6 +937,29 @@ function bindScopeFilter(){
   if (bg) bg.addEventListener('click', function(){
     state.scopeG = !state.scopeG; bg.setAttribute('aria-pressed', state.scopeG ? 'true' : 'false');
     if (root) root.classList.toggle('lawapp-fg', state.scopeG); applySearch();
+  });
+}
+
+// 위임조문 연계 링크(근거↑·위임▸) 클릭 — 대상 법을 오른쪽 열에 열고 해당 조문으로 점프.
+// #lawapp-columns는 재렌더에도 유지되므로 위임 리스너 1개로 충분.
+function bindXrefLinks(){
+  var cont = $('#lawapp-columns');
+  if (!cont) return;
+  cont.addEventListener('click', function(e){
+    var b = e.target.closest('.lawapp-xlink');
+    if (!b) return;
+    e.preventDefault();
+    var lid = b.getAttribute('data-law');
+    if (!lid || !state.laws[lid]) return;
+    var art = b.getAttribute('data-art');
+    var ci = openLaw(lid);
+    if (ci < 0) return;
+    touchColumn(ci);
+    if (art){
+      var L = state.laws[lid], idx = -1;
+      for (var k = 0; k < L.rows.length; k++){ var rr = L.rows[k]; if (rr.isHeading && rr.kind === 'article' && rr.artNo === art){ idx = rr.idx; break; } }
+      if (idx >= 0) requestAnimationFrame(function(){ scrollRowToCenter(ci, idx, true); });
+    }
   });
 }
 
@@ -975,6 +1012,7 @@ function applyManifest(data){
   });
   var clean = { laws: laws };
   state.manifest = clean;
+  state._xref = null;   // manifest 변경 시 위임조문 색인 무효화
   lsSet({ manifest: clean });   // 오염되지 않은 항목만 캐시에 저장
   if (dropped > 0) showBanner('법령 목록 중 형식이 잘못된 항목 ' + dropped + '개를 제외하고 표시합니다.');
 
@@ -993,6 +1031,7 @@ function applyManifest(data){
 
 function loadAllLaws(){
   var total = state.order.length, done = 0;
+  state._xref = null;   // 재로드 시 위임조문 색인 무효화
   updateLoadProgress(done, total);
   state.order.forEach(function(id){
     var L = state.laws[id];
@@ -1011,7 +1050,20 @@ function loadAllLaws(){
           if (col.lawId === id){ renderColumnBody(ci); restorePendingCenter(ci); }
         });
         if (state.rawQuery) runSearch();
-        if (done === total){ $('#lawapp-loading').classList.remove('show'); }
+        if (done === total){
+          $('#lawapp-loading').classList.remove('show');
+          // 전체 로드 완료 → 위임조문 색인 확정, 이미 열린 열에 근거↑·위임▸ 반영(스크롤 보존)
+          state._xref = null;
+          state.columns.forEach(function(col, ci){
+            if (!col.lawId || !(state.laws[col.lawId] && state.laws[col.lawId].loaded)) return;
+            var bodyEl = document.querySelector('.lawapp-col-body[data-col="'+ci+'"]');
+            var st = bodyEl ? bodyEl.scrollTop : 0;
+            renderColumnBody(ci);
+            if (state.query.phraseNorm){ computeColumnMatches(ci); refreshColumnMatchNav(ci); applyColumnHighlights(ci); }
+            var b2 = document.querySelector('.lawapp-col-body[data-col="'+ci+'"]');
+            if (b2) b2.scrollTop = st;
+          });
+        }
       });
   });
 }
@@ -1230,6 +1282,191 @@ function buildColumnEl(col, ci){
 function touchColumn(ci){ if (state.columns[ci]) state.columns[ci].useTick = ++state.useTick; }
 
 // IT·보안 점검대상 약식 배지 HTML (v: 'cg'|'c'|'g')
+/* =========================================================================
+   위임조문 연계(법↔시행령↔고시) — 하이퍼링크가 아니라, 하위법 본문에 박힌
+   "법 제N조[제M항]"·"영 제N조" 인용을 역으로 색인해 위임↔근거를 연결한다.
+   결정론적(본문에 이미 있는 인용만 사용) → 환각 없음. law.go.kr 위임조문 방식과 동일.
+   ========================================================================= */
+// 원문자 항 번호 → 숫자 (①..⑳=1..20, ㉑..㉟=21..35, ㊱..㊿=36..50)
+function circledNum(ch){
+  var c = String(ch || '').charCodeAt(0);
+  if (c >= 0x2460 && c <= 0x2473) return c - 0x2460 + 1;
+  if (c >= 0x3251 && c <= 0x325F) return c - 0x3251 + 21;
+  if (c >= 0x32B1 && c <= 0x32BF) return c - 0x32B1 + 36;
+  return null;
+}
+// '제21조' / '제28조의8' → 정렬용 숫자
+function artNumKey(a){ var m = String(a).match(/제(\d+)조(?:의(\d+))?/); return m ? (+m[1]) * 1000 + (m[2] ? +m[2] : 0) : 0; }
+// 호(號) 줄의 번호 추출: "3. …" / "3의2. …" → '3' / '3의2'
+function hoNum(text){ var m = String(text).match(/^(\d+(?:의\d+)?)\./); return m ? m[1] : null; }
+// 분야(category)별 역할 ID — act/decree/rule/standard
+function buildRoles(){
+  var roles = {};
+  ((state.manifest && state.manifest.laws) || []).forEach(function(m){
+    var r = roles[m.category] || (roles[m.category] = {});
+    if (m.type === '법률') r.act = m.id;
+    else if (m.type === '대통령령') r.decree = m.id;
+    else if (m.type === '부령' || m.type === '총리령') r.rule = m.id;
+    else if (m.type === '행정규칙') r.standard = m.id;
+  });
+  return roles;
+}
+// 본문에서 상위법 인용을 추출: [{kind:'법'|'영', art:'제21조', hang:4|null, ho:'3'|null}]
+// '법/영' 접두 뒤 첫 제○조에 적용하고, 또는·및·ㆍ·,·부터·내지로 이어지면 같은 접두를 승계(복합 인용).
+// 항(제M항)·호(제K호·제K의L호)까지 잡는다. 목(가목)은 가족 법령에 위임 대상이 없어 무시.
+function parseCites(txt, allowYeong){
+  var cites = [], cur = null, prevEnd = -1;
+  var re = /(법|영)\s*(?=제\d+조)|제(\d+)조(?:의(\d+))?(?:제(\d+)항)?(?:제(\d+(?:의\d+)?)호)?/g, m;
+  while ((m = re.exec(txt))){
+    var start = m.index, end = re.lastIndex;
+    if (m[1]){ cur = (m[1] === '영' && !allowYeong) ? null : m[1]; prevEnd = end; continue; }
+    if (cur != null){
+      var gap = (prevEnd >= 0) ? txt.slice(prevEnd, start) : ' ';
+      if (start === prevEnd || /^\s*$/.test(gap) || /^\s*(?:또는|및|ㆍ|·|,|부터|내지|까지|에서)\s*$/.test(gap)){
+        cites.push({ kind: cur, art: '제' + m[2] + '조' + (m[3] ? ('의' + m[3]) : ''), hang: m[4] ? (+m[4]) : null, ho: m[5] || null, pos: start });
+        prevEnd = end; continue;
+      }
+      cur = null;
+    }
+    prevEnd = end;
+  }
+  return cites;
+}
+// 전체 색인(모든 법령 로드 완료 후 1회 계산, 캐시) — 줄 단위 부착맵.
+//   rowUp[법ID][행idx]   = [{kind,targetId,art}]  근거(↑): 인용이 처음 나온 그 줄
+//   rowDown[법ID][행idx] = {hang, cands[]}         위임(▸): 위임표현이 든 그 줄(없으면 제목 폴백)
+function getXref(){
+  if (state._xref) return state._xref;
+  if (!(state.order.length && state.order.every(function(id){ return state.laws[id] && state.laws[id].loaded; }))) return null;
+  var roles = buildRoles(), down = {}, rowUp = {};
+  // ── 1패스: 하위법 본문의 상위법 인용 → down 색인 + rowUp(근거 줄) ──
+  state.order.forEach(function(id){
+    var L = state.laws[id], mm = L.manifestMeta || {}, R = roles[mm.category] || {};
+    if (mm.type === '법률') return;                  // 본법은 상위 인용 없음(아래로만 받음)
+    var isDecree = (mm.type === '대통령령');
+    var curK = null, curArt = null, curTitle = null, order = 0;
+    L.rows.forEach(function(r){
+      if (r.isHeading && r.kind === 'article'){ curK = r.groupKey; curArt = r.artNo; curTitle = r.artTitle; order = 0; }
+      else if (curK != null && r.kind === 'body'){
+        var lineSeen = {};   // 같은 줄 안에서만 중복제거 — 인용된 모든 줄에 ↑근거 표시(위임▸와 일관)
+        parseCites(r.text, !isDecree).forEach(function(c){   // 시행령에서 '영'=자기자신이므로 제외
+          var tid = (c.kind === '법') ? R.act : (c.kind === '영' ? R.decree : null);
+          if (!tid || tid === id) return;
+          var uk = c.kind + '|' + c.art;
+          if (!lineSeen[uk]){ lineSeen[uk] = true; (rowUp[id] || (rowUp[id] = {})); (rowUp[id][r.idx] || (rowUp[id][r.idx] = [])).push({ kind: c.kind, targetId: tid, art: c.art }); }
+          var dl = down[tid] || (down[tid] = {}), arr = dl[c.art] || (dl[c.art] = []), ex = null;
+          for (var i = 0; i < arr.length; i++) if (arr[i].srcId === id && arr[i].srcKey === curK){ ex = arr[i]; break; }
+          if (!ex){ ex = { srcId: id, srcKey: curK, srcArt: curArt, title: curTitle, cites: [], minOrder: order }; arr.push(ex); }
+          var ck = (c.hang == null ? '' : c.hang) + '/' + (c.ho || '');   // 인용한 항·호 조합(중복제거)
+          for (var j = 0; j < ex.cites.length; j++) if (ex.cites[j].key === ck){ ck = null; break; }
+          if (ck) ex.cites.push({ hang: c.hang, ho: c.ho, key: ck });
+          if (order < ex.minOrder) ex.minOrder = order;   // 인용이 조문 앞쪽(①항 도입부)일수록 위임 본조일 확률↑
+        });
+        order++;
+      }
+    });
+  });
+  // ── 2패스: 본법·시행령의 위임표현 줄에 down 후보 배치 → rowDown ──
+  var rowDown = {};
+  state.order.forEach(function(id){
+    var mm = state.laws[id].manifestMeta || {};
+    if (!(mm.type === '법률' || mm.type === '대통령령') || !down[id]) return;
+    var curArt = null, headIdx = null, delegRows = null, curHang = null;
+    function flush(){
+      if (curArt == null) return;
+      var cands = down[id][curArt];
+      if (cands && cands.length) placeDownCands(rowDown, id, cands, delegRows, headIdx);
+    }
+    state.laws[id].rows.forEach(function(r){
+      if (r.isHeading && r.kind === 'article'){ flush(); curArt = r.artNo; headIdx = r.idx; delegRows = []; curHang = null; }
+      else if (curArt != null && r.kind === 'body'){
+        if (r.indent === 1) curHang = circledNum(r.text.charAt(0));   // 현재 항 추적(호 줄의 부모 항)
+        if (/대통령령|총리령|부령|고시/.test(r.text)){
+          var ho = (r.indent === 2) ? hoNum(r.text) : null;           // 호 줄이면 호 번호
+          var hang = (r.indent === 1) ? circledNum(r.text.charAt(0)) : (r.indent === 2 ? curHang : null);
+          delegRows.push({ rowIdx: r.idx, hang: hang, ho: ho });
+        }
+      }
+    });
+    flush();
+  });
+  return (state._xref = { rowUp: rowUp, rowDown: rowDown });
+}
+// 후보가 위임 줄(dr)을 구현하는가 — 호 줄이면 항·호 정확일치, 항 줄이면 항 일치(호 무관), 번호없는 줄이면 조만 인용
+function matchesDeleg(c, dr){
+  if (dr.ho != null) return c.cites.some(function(ct){ return ct.hang === dr.hang && String(ct.ho) === String(dr.ho); });
+  if (dr.hang != null) return c.cites.some(function(ct){ return ct.hang === dr.hang; });
+  return c.cites.some(function(ct){ return ct.hang == null; });
+}
+function pushSlot(rowDown, id, rowIdx, dr, c){
+  var rd = rowDown[id] || (rowDown[id] = {});
+  var slot = rd[rowIdx] || (rd[rowIdx] = { hang: dr ? dr.hang : null, ho: dr ? dr.ho : null, cands: [] });
+  for (var j = 0; j < slot.cands.length; j++) if (slot.cands[j].srcId === c.srcId && slot.cands[j].srcArt === c.srcArt) return;
+  slot.cands.push(c);
+}
+// down 후보를 위임표현 줄에 배치: 매칭되는 모든 위임 줄에(한 조문이 여러 항·호 구현 가능) → 매칭 없으면 첫 위임 줄 → 제목 폴백
+function placeDownCands(rowDown, id, cands, delegRows, headIdx){
+  if (!delegRows || !delegRows.length){ cands.forEach(function(c){ pushSlot(rowDown, id, headIdx, null, c); }); return; }
+  cands.forEach(function(c){
+    var placed = false;
+    delegRows.forEach(function(dr){ if (matchesDeleg(c, dr)){ pushSlot(rowDown, id, dr.rowIdx, dr, c); placed = true; } });
+    if (!placed) pushSlot(rowDown, id, delegRows[0].rowIdx, delegRows[0], c);   // 어느 항·호에도 안 걸리면 첫 위임 줄
+  });
+}
+// 대상 법령의 역할 라벨(같은 분야 기준): 시행령/시행규칙/고시/법
+function xrefRoleLabel(sid){
+  var tm = state.laws[sid] && state.laws[sid].manifestMeta; if (!tm) return sid;
+  if (tm.type === '대통령령') return '시행령';
+  if (tm.type === '부령' || tm.type === '총리령') return '시행규칙';
+  if (tm.type === '행정규칙') return '고시';
+  if (tm.type === '법률') return '법';
+  return tm.short || sid;
+}
+function xlinkBtn(lawId, art, label){
+  var tip = lawDisplay(lawId) + ' ' + art + ' · 클릭하면 해당 조문 열기';
+  return '<button type="button" class="lawapp-xlink" data-law="' + escapeHtml(lawId) + '" data-art="' + escapeHtml(art) + '" data-tip="' + escapeHtml(tip) + '">' + escapeHtml(label) + '</button>';
+}
+var XREF_MAX = 6;   // 한 줄에 표시할 최대 후보 수
+// 후보가 이 줄(hang/ho)에 얼마나 정확히 맞는지 — 작을수록 우선(0=호/항 정확, 1=항만, 2=조만, 3=기타)
+function slotBucket(c, hang, ho){
+  if (hang == null) return c.cites.some(function(ct){ return ct.hang == null; }) ? 0 : 3;
+  if (ho != null){
+    if (c.cites.some(function(ct){ return ct.hang === hang && String(ct.ho) === String(ho); })) return 0;
+    if (c.cites.some(function(ct){ return ct.hang === hang; })) return 1;
+  } else if (c.cites.some(function(ct){ return ct.hang === hang; })) return 0;
+  return c.cites.some(function(ct){ return ct.hang == null; }) ? 2 : 3;
+}
+// down 후보 정렬: 이 줄의 항·호 정확일치 → 도입부 인용(본조) → 조번호순
+function rankSlot(cands, hang, ho){
+  return cands.slice().sort(function(a, b){
+    var ax = slotBucket(a, hang, ho), bx = slotBucket(b, hang, ho);
+    if (ax !== bx) return ax - bx;
+    if (a.minOrder !== b.minOrder) return a.minOrder - b.minOrder;
+    return artNumKey(a.srcArt) - artNumKey(b.srcArt);
+  });
+}
+// ↑ 근거(상위법) — 인용이 나온 그 줄에 표시
+function xrefUpRowHtml(L, rowIdx){
+  var x = getXref(); if (!x) return '';
+  var ups = (x.rowUp[L.manifestMeta.id] || {})[rowIdx]; if (!ups || !ups.length) return '';
+  var parts = ups.slice(0, XREF_MAX).map(function(u){ return xlinkBtn(u.targetId, u.art, u.kind + ' ' + u.art); });
+  var more = ups.length > XREF_MAX ? ('<span class="lawapp-xref-more"> 외 ' + (ups.length - XREF_MAX) + '건</span>') : '';
+  return '<span class="lawapp-xref up"><span class="lawapp-xref-lead">↑ 근거</span>' + parts.join('<span class="sep">·</span>') + more + '</span>';
+}
+// ▸ 위임(하위법) — 위임표현이 든 그 줄에 표시. 같은 법끼리 묶고 후보 정렬.
+function xrefDownRowHtml(L, rowIdx){
+  var x = getXref(); if (!x) return '';
+  var slot = (x.rowDown[L.manifestMeta.id] || {})[rowIdx]; if (!slot || !slot.cands.length) return '';
+  var ranked = rankSlot(slot.cands, slot.hang, slot.ho);
+  var shown = ranked.slice(0, XREF_MAX), order = [], byLaw = {};
+  shown.forEach(function(c){ if (!byLaw[c.srcId]){ byLaw[c.srcId] = []; order.push(c.srcId); } byLaw[c.srcId].push(c); });
+  var parts = order.map(function(sid){
+    var arts = byLaw[sid].map(function(c){ return xlinkBtn(sid, c.srcArt, c.srcArt); }).join('<span class="sep">·</span>');
+    return '<span class="lawapp-xref-role">' + escapeHtml(xrefRoleLabel(sid)) + '</span> ' + arts;
+  }).join('<span class="sep"> · </span>');
+  var more = ranked.length > XREF_MAX ? ('<span class="lawapp-xref-more"> 외 ' + (ranked.length - XREF_MAX) + '건</span>') : '';
+  return '<span class="lawapp-xref down"><span class="lawapp-xref-lead">▸ 위임</span>' + parts + more + '</span>';
+}
 function scopeBadgeHtml(v){
   var h = ' <span class="lawapp-scope">';
   if (v.indexOf('c') >= 0) h += '<span class="lawapp-sb c" title="민간기업 점검대상">C</span>';
@@ -1276,7 +1513,8 @@ function renderColumnBody(ci){
     var sg = scopeGroups[r.groupKey];                       // 대상 필터용(C/G)
     var scCls = sg ? ((sg.c ? ' lawapp-sc-c' : '') + (sg.g ? ' lawapp-sc-g' : '')) : '';
     var sb = (r.isHeading && r.kind === 'article' && scopeMap && scopeMap[r.artNo]) ? scopeBadgeHtml(scopeMap[r.artNo]) : '';
-    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+sb+'</div>';
+    var xr = xrefUpRowHtml(L, r.idx) + xrefDownRowHtml(L, r.idx);   // 근거↑·위임▸ — 해당 항/본문 줄에 부착
+    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+sb+xr+'</div>';
   }
   body.innerHTML = html;
 }
@@ -1287,7 +1525,7 @@ function retryLaw(id){
   state.columns.forEach(function(col,ci){ if(col.lawId===id) renderColumnBody(ci); });
   fetchWithTimeout(urlFor(L.manifestMeta.file) + '?v=' + encodeURIComponent(L.manifestMeta.version||'') + '&r=1', { cache:'default' })
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-    .then(function(md){ var p=parseLaw(md,id); L.meta=p.meta; L.rows=p.rows; L.toc=p.toc; L.loaded=true; L.error=null; L._futureInfo=null; })
+    .then(function(md){ var p=parseLaw(md,id); L.meta=p.meta; L.rows=p.rows; L.toc=p.toc; L.loaded=true; L.error=null; L._futureInfo=null; state._xref=null; })
     .catch(function(err){ L.error = (err && err.name === 'AbortError') ? '응답 시간 초과' : (err.message || '로드 실패'); })
     .then(function(){
       state.columns.forEach(function(col,ci){ if(col.lawId===id){ renderColumnBody(ci); computeColumnMatches(ci); refreshColumnMatchNav(ci); applyColumnHighlights(ci); } });
