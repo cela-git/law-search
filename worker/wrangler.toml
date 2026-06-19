@@ -1,0 +1,22 @@
+name = "law-search"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+# 배포 URL: https://law-search.cela-cf.workers.dev  (name + 계정 서브도메인 cela-cf)
+
+workers_dev = true
+preview_urls = false
+
+# 접속/저장 시도 로그(IP 포함) 보존 — 대시보드 Workers Logs에서 조회. 경고문 'IP 기록·추적'의 실효 근거.
+[observability]
+enabled = true
+
+# 공개 변수(비밀 아님). 비밀(EDIT_PASSWORD, GITHUB_TOKEN)은 `wrangler secret put` 으로 등록.
+[vars]
+GH_OWNER = "cela-git"
+GH_REPO = "law-search"
+GH_BRANCH = "main"
+GH_PATH = "scope.json"
+# 편집 UI(iframe)가 실제로 로드되는 오리진. GitHub Pages 주소.
+ALLOW_ORIGIN = "https://cela-git.github.io"
+# 웹 편집 커밋의 git author 이메일(작성자 이름을 적었을 때). 신원 검증용 아님 — 표시용.
+COMMIT_EMAIL = "scope-editor@cela.kr"
