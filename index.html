@@ -401,8 +401,8 @@ body:has(> #lawapp-root){ overflow:hidden; }
   <div class="lawapp-edit-bar" id="lawapp-edit-bar">
     <div class="lawapp-eb-row"><span class="lawapp-eb-ttl">점검대상 편집 중</span><span class="lawapp-eb-cnt" id="lawapp-eb-cnt">변경 0건</span></div>
     <div class="lawapp-eb-msg" id="lawapp-eb-msg">조문 제목 옆 C를 눌러 추가/제거하세요.</div>
-    <input type="text" class="lawapp-eb-input" id="lawapp-eb-editor" placeholder="작성자 (선택)" maxlength="60" autocomplete="off" aria-label="작성자">
-    <input type="text" class="lawapp-eb-input" id="lawapp-eb-note" placeholder="메모 (선택 · 커밋에 기록)" maxlength="200" autocomplete="off" aria-label="메모">
+    <input type="text" class="lawapp-eb-input" id="lawapp-eb-editor" placeholder="작성자 (필수)" maxlength="60" autocomplete="off" aria-label="작성자">
+    <input type="text" class="lawapp-eb-input" id="lawapp-eb-note" placeholder="메모 (필수 · 커밋에 기록)" maxlength="200" autocomplete="off" aria-label="메모">
     <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-cancel" id="lawapp-eb-cancel">취소</button><button type="button" class="lawapp-eb-save" id="lawapp-eb-save" disabled>저장</button></div>
   </div>
   <div class="lawapp-emodal" id="lawapp-edit-login" aria-hidden="true">
@@ -493,9 +493,9 @@ var LAW_STYLE = {
   LBS_ACT:     { abbr:'위정법', color:'#15803d', family:'위치정보법' },
   LBS_DECREE:  { abbr:'위정령', color:'#22c55e', family:'위치정보법', sub:'시행령' },
   LBS_PROTECTION_STANDARD: { abbr:'위치보호', color:'#84cc16', family:'위치정보법', sub:'관리적·기술적 보호조치 기준' },
-  ISI_ACT:     { abbr:'정산법', color:'#0891b2', family:'정보보호산업법' },
-  ISI_DECREE:  { abbr:'정산령', color:'#22d3ee', family:'정보보호산업법', sub:'시행령' },
-  ISI_RULE:    { abbr:'정산칙', color:'#67e8f9', family:'정보보호산업법', sub:'시행규칙' }
+  ISI_ACT:     { abbr:'정보법', color:'#0891b2', family:'정보보호산업법' },
+  ISI_DECREE:  { abbr:'정보령', color:'#22d3ee', family:'정보보호산업법', sub:'시행령' },
+  ISI_RULE:    { abbr:'정보칙', color:'#67e8f9', family:'정보보호산업법', sub:'시행규칙' }
 };
 var FALLBACK_COLORS = ['#2563eb','#0f766e','#d97706','#7c3aed','#dc2626','#0891b2','#4338ca','#15803d'];
 // 분야(카테고리) 대표 색 — 결과 패널의 분야 밴드(ex3)에 사용. 없으면 그 분야 첫 법령 색으로 대체.
@@ -1020,6 +1020,8 @@ function bindEditor(){
   if (login) login.addEventListener('click', function(e){ if (e.target === login) closeLogin(); });
   var ebc = $('#lawapp-eb-cancel'); if (ebc) ebc.addEventListener('click', exitEditMode);
   var ebs = $('#lawapp-eb-save'); if (ebs) ebs.addEventListener('click', saveScope);
+  var ebEditor = $('#lawapp-eb-editor'); if (ebEditor) ebEditor.addEventListener('input', updateEditCount);
+  var ebNote = $('#lawapp-eb-note'); if (ebNote) ebNote.addEventListener('input', updateEditCount);
 
   // 인라인 C 토글 클릭(위임) — 본문 열에서
   var cont = $('#lawapp-columns');
@@ -1106,7 +1108,10 @@ function editChangeCount(){
 function updateEditCount(){
   var n = editChangeCount();
   var c = $('#lawapp-eb-cnt'); if (c) c.textContent = '변경 ' + n + '건';
-  var sv = $('#lawapp-eb-save'); if (sv) sv.disabled = (n === 0);
+  var editor = (($('#lawapp-eb-editor') || {}).value || '').trim();
+  var note = (($('#lawapp-eb-note') || {}).value || '').trim();
+  // 작성자·메모는 필수 — 변경 + 둘 다 입력돼야 저장 활성화
+  var sv = $('#lawapp-eb-save'); if (sv) sv.disabled = (n === 0 || !editor || !note);
 }
 function setEbMsg(txt, cls){ var m = $('#lawapp-eb-msg'); if (!m) return; m.textContent = txt || ''; m.className = 'lawapp-eb-msg' + (cls ? (' ' + cls) : ''); }
 
@@ -1114,10 +1119,11 @@ function saveScope(){
   if (!state.editMode || !state.editPw) return;
   var n = editChangeCount();
   if (!n){ setEbMsg('변경된 내용이 없습니다.', ''); return; }
-  var sv = $('#lawapp-eb-save'); if (sv) sv.disabled = true;
-  setEbMsg('저장 중…', '');
   var editor = (($('#lawapp-eb-editor') || {}).value || '').trim();
   var note = (($('#lawapp-eb-note') || {}).value || '').trim();
+  if (!editor || !note){ setEbMsg('작성자와 메모를 모두 입력해야 저장됩니다.', 'err'); return; }
+  var sv = $('#lawapp-eb-save'); if (sv) sv.disabled = true;
+  setEbMsg('저장 중…', '');
   var payload = { action:'save', password: state.editPw, scope: state.editScope, editor: editor, note: note, count: n };
   fetch(SCOPE_EDITOR_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
     .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }, function(){ return { ok:r.ok, j:null }; }); })
