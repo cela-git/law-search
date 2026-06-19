@@ -48,6 +48,11 @@
 #lawapp-root ::-webkit-scrollbar-thumb:hover{ background:#94a3b8; background-clip:content-box; }
 #lawapp-root ::-webkit-scrollbar-track{ background:transparent; }
 #lawapp-root *{ box-sizing:border-box; margin:0; padding:0; }
+/* iframe(단독 문서)로 임베드될 때만 body 기본 여백 제거 → 문서가 viewport를 살짝 넘쳐
+   생기던 '안쪽 스크롤' 제거. #lawapp-root이 body 직속일 때만 적용되므로(:has),
+   아임웹 페이지에 인라인 삽입해도 호스트 레이아웃엔 영향 없음. */
+html:has(> body > #lawapp-root), body:has(> #lawapp-root){ margin:0; padding:0; height:100%; }
+body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root button{ font:inherit; color:inherit; cursor:pointer; background:none; border:none; }
 #lawapp-root select{ font:inherit; color:inherit; }
 
