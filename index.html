@@ -234,6 +234,9 @@ body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-edit-bar button{ padding:6px 12px; border-radius:8px; border:1px solid var(--c-border-strong); background:#fff; font-size:12.5px; font-weight:700; color:var(--c-text); cursor:pointer; }
 #lawapp-root .lawapp-edit-bar .lawapp-eb-save{ border-color:#ea580c; background:#ea580c; color:#fff; }
 #lawapp-root .lawapp-edit-bar .lawapp-eb-save:disabled{ opacity:.5; cursor:default; }
+#lawapp-root .lawapp-edit-bar .lawapp-eb-csv{ width:100%; border-color:var(--c-border-strong); background:#fff; color:var(--c-text); }
+#lawapp-root .lawapp-edit-bar .lawapp-eb-csv:hover{ background:#f8fafc; }
+#lawapp-root .lawapp-edit-bar .lawapp-eb-csv:disabled{ opacity:.5; cursor:default; }
 /* 편집 로그인 모달 — 요약 모달과 클래스 충돌 피하려 고유 접두사(emodal) 사용 */
 #lawapp-root .lawapp-emodal{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.42); }
 #lawapp-root .lawapp-emodal.show{ display:flex; }
@@ -401,6 +404,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
   <div class="lawapp-edit-bar" id="lawapp-edit-bar">
     <div class="lawapp-eb-row"><span class="lawapp-eb-ttl">점검대상 편집 중</span><span class="lawapp-eb-cnt" id="lawapp-eb-cnt">변경 0건</span></div>
     <div class="lawapp-eb-msg" id="lawapp-eb-msg">조문 제목 옆 C를 눌러 추가/제거하세요.</div>
+    <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-csv" id="lawapp-eb-csv">현재 점검대상 CSV 추출</button></div>
     <input type="text" class="lawapp-eb-input" id="lawapp-eb-editor" placeholder="작성자 (필수)" maxlength="60" autocomplete="off" aria-label="작성자">
     <input type="text" class="lawapp-eb-input" id="lawapp-eb-note" placeholder="메모 (필수 · 커밋에 기록)" maxlength="200" autocomplete="off" aria-label="메모">
     <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-cancel" id="lawapp-eb-cancel">취소</button><button type="button" class="lawapp-eb-save" id="lawapp-eb-save" disabled>저장</button></div>
@@ -1020,6 +1024,7 @@ function bindEditor(){
   if (login) login.addEventListener('click', function(e){ if (e.target === login) closeLogin(); });
   var ebc = $('#lawapp-eb-cancel'); if (ebc) ebc.addEventListener('click', exitEditMode);
   var ebs = $('#lawapp-eb-save'); if (ebs) ebs.addEventListener('click', saveScope);
+  var ebcsv = $('#lawapp-eb-csv'); if (ebcsv) ebcsv.addEventListener('click', exportScopeCsv);
   var ebEditor = $('#lawapp-eb-editor'); if (ebEditor) ebEditor.addEventListener('input', updateEditCount);
   var ebNote = $('#lawapp-eb-note'); if (ebNote) ebNote.addEventListener('input', updateEditCount);
 
@@ -1142,6 +1147,63 @@ function saveScope(){
       }
     })
     .catch(function(){ setEbMsg('서버 연결 실패.', 'err'); if (sv) sv.disabled = false; });
+}
+
+// ── 점검대상 CSV 추출 ──────────────────────────────────────────────────
+// 편집 화면의 '현재 적용 상태'(state.editScope)를 기준으로 전 법령·전 조문을 나열하고
+// 민간기업 점검대상 여부를 O/X로 표기한 CSV를 내려받는다. 모든 법은 시작 시 loadAllLaws로
+// 이미 로딩돼 있어 추가 요청 없이 클라이언트에서 즉시 생성한다(서버 불필요).
+function csvCell(v){
+  v = (v == null) ? '' : String(v);
+  return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;   // 쉼표·따옴표·개행 포함 시 따옴표 감싸기
+}
+function csvDateStamp(){
+  var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function exportScopeCsv(){
+  var scope = state.editMode ? (state.editScope || {}) : (state.scope || {});
+  var header = ['법ID', '법령명', '구분', '분야', '장', '절', '조문', '조문제목', '점검대상'];
+  var lines = [header.map(csvCell).join(',')];
+  var totalArt = 0, totalChecked = 0, missing = 0;
+  state.order.forEach(function(id){
+    var L = state.laws[id]; if (!L) return;
+    var mm = L.manifestMeta || {};
+    var name = mm.short || mm.title || id, type = mm.type || '', cat = mm.category || '';
+    var sm = scope[id] || {};
+    if (!L.loaded || !L.rows || !L.rows.length){     // 본문 미로딩(드묾: 로드 실패) — 체크분만이라도 보존
+      var arts = Object.keys(sm);
+      arts.forEach(function(art){ lines.push([id, name, type, cat, '', '', art, '', 'O'].map(csvCell).join(',')); totalArt++; totalChecked++; });
+      if (arts.length) missing++;
+      return;
+    }
+    var curJang = '', curJeol = '';
+    L.rows.forEach(function(r){
+      if (r.kind === 'section'){                       // ## 장/절/관/편 헤딩(부칙·별표 제외)
+        var t = r.text || '';
+        if (/^제\d+절/.test(t) || /^제\d+관/.test(t)) curJeol = t;
+        else { curJang = t; curJeol = ''; }            // 장·편 → 장 갱신, 절 초기화
+        return;
+      }
+      if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
+      if (r.kind !== 'article' || !r.artNo) return;     // 본문 조문만(부칙·별표 항목 제외)
+      var checked = !!sm[r.artNo];
+      lines.push([id, name, type, cat, curJang, curJeol, r.artNo, r.artTitle || '', checked ? 'O' : 'X'].map(csvCell).join(','));
+      totalArt++; if (checked) totalChecked++;
+    });
+  });
+  var csv = String.fromCharCode(0xFEFF) + lines.join('\r\n') + '\r\n';   // UTF-8 BOM(엑셀 한글 깨짐 방지) + CRLF
+  try {
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = '점검대상_' + csvDateStamp() + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  } catch (e){ setEbMsg('CSV 생성 실패: ' + ((e && e.message) || e), 'err'); return; }
+  var msg = 'CSV 추출됨 ✓ 전체 ' + totalArt + '개 조문 중 점검대상 ' + totalChecked + '개';
+  if (missing) msg += ' (미로딩 ' + missing + '개 법령은 체크분만 포함)';
+  setEbMsg(msg, 'ok');
 }
 
 // 위임조문 연계 링크(근거↑·위임▸) 클릭 — 대상 법을 오른쪽 열에 열고 해당 조문으로 점프.
@@ -2519,7 +2581,7 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     autoUpcoming: autoUpcoming, autoUpcomingLines: autoUpcomingLines,
     futureInfo: futureInfo, diffFutureLines: diffFutureLines, diffAddRanges: diffAddRanges,
     setColumns: function(ids){ state.columns = (ids||[]).filter(function(id){ return state.laws[id]; }).map(function(id){ return newColumn(id); }); renderColumns(); renderLawBadges(); saveUiState(); },
-    enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope,
+    enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeCsv: exportScopeCsv,
     editChangeCount: editChangeCount, scopeCellHtml: scopeCellHtml, effScope: effScope, cloneScope: cloneScope,
     CONFIG: CONFIG
   };
