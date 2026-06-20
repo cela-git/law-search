@@ -1161,24 +1161,40 @@ function csvDateStamp(){
   var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
 }
+// 조문 본문(전문): 조문 헤딩 다음부터 다음 헤딩 전까지의 body 행을 줄바꿈으로 이어 붙임(생략 없음)
+function csvArticleBody(rows, hi){
+  var out = [];
+  for (var i = hi + 1; i < rows.length; i++){
+    var r = rows[i];
+    if (r.isHeading) break;            // 다음 조문·장·절·부칙·별표 헤딩에서 종료
+    if (r.kind === 'body') out.push(r.text);
+  }
+  return out.join('\n');
+}
+// "법령명 [시행 YYYY. M. D]" — 시행일은 manifest enforced(YYYY-MM-DD) 기준
+function csvLawLabel(mm, name){
+  var d = String(mm.enforced || '').split('-');
+  if (d.length === 3) return name + ' [시행 ' + parseInt(d[0], 10) + '. ' + parseInt(d[1], 10) + '. ' + parseInt(d[2], 10) + ']';
+  return name;
+}
 function exportScopeCsv(){
   var scope = state.editMode ? (state.editScope || {}) : (state.scope || {});
-  var header = ['법ID', '법령명', '구분', '분야', '장', '절', '조문', '조문제목', '점검대상'];
+  var header = ['법령명', '법령(시행일)', '장', '절', '조문', '본문(전문)', '점검대상'];
   var lines = [header.map(csvCell).join(',')];
   var totalArt = 0, totalChecked = 0, missing = 0;
   state.order.forEach(function(id){
     var L = state.laws[id]; if (!L) return;
     var mm = L.manifestMeta || {};
-    var name = mm.short || mm.title || id, type = mm.type || '', cat = mm.category || '';
+    var name = mm.short || mm.title || id, label = csvLawLabel(mm, name);
     var sm = scope[id] || {};
     if (!L.loaded || !L.rows || !L.rows.length){     // 본문 미로딩(드묾: 로드 실패) — 체크분만이라도 보존
       var arts = Object.keys(sm);
-      arts.forEach(function(art){ lines.push([id, name, type, cat, '', '', art, '', 'O'].map(csvCell).join(',')); totalArt++; totalChecked++; });
+      arts.forEach(function(art){ lines.push([name, label, '', '-', art, '', 'O'].map(csvCell).join(',')); totalArt++; totalChecked++; });
       if (arts.length) missing++;
       return;
     }
     var curJang = '', curJeol = '';
-    L.rows.forEach(function(r){
+    L.rows.forEach(function(r, ri){
       if (r.kind === 'section'){                       // ## 장/절/관/편 헤딩(부칙·별표 제외)
         var t = r.text || '';
         if (/^제\d+절/.test(t) || /^제\d+관/.test(t)) curJeol = t;
@@ -1187,8 +1203,8 @@ function exportScopeCsv(){
       }
       if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
       if (r.kind !== 'article' || !r.artNo) return;     // 본문 조문만(부칙·별표 항목 제외)
-      var checked = !!sm[r.artNo];
-      lines.push([id, name, type, cat, curJang, curJeol, r.artNo, r.artTitle || '', checked ? 'O' : 'X'].map(csvCell).join(','));
+      var checked = !!sm[r.artNo];                       // 같은 조문번호 2벌(현행+시행예정)도 각각 출력 — dedup 안 함
+      lines.push([name, label, curJang, curJeol || '-', r.text, csvArticleBody(L.rows, ri), checked ? 'O' : 'X'].map(csvCell).join(','));
       totalArt++; if (checked) totalChecked++;
     });
   });
