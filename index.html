@@ -1157,6 +1157,10 @@ function csvCell(v){
   v = (v == null) ? '' : String(v);
   return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;   // 쉼표·따옴표·개행 포함 시 따옴표 감싸기
 }
+function csvDash(v){   // 빈 값(장·절·본문 등)은 '-'로 표기
+  v = (v == null) ? '' : String(v);
+  return v.trim() === '' ? '-' : v;
+}
 function csvDateStamp(){
   var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
@@ -1189,7 +1193,7 @@ function exportScopeCsv(){
     var sm = scope[id] || {};
     if (!L.loaded || !L.rows || !L.rows.length){     // 본문 미로딩(드묾: 로드 실패) — 체크분만이라도 보존
       var arts = Object.keys(sm);
-      arts.forEach(function(art){ lines.push([name, label, '', '-', art, '', 'O'].map(csvCell).join(',')); totalArt++; totalChecked++; });
+      arts.forEach(function(art){ lines.push([name, label, '', '', art, '', 'O'].map(csvDash).map(csvCell).join(',')); totalArt++; totalChecked++; });
       if (arts.length) missing++;
       return;
     }
@@ -1204,7 +1208,7 @@ function exportScopeCsv(){
       if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
       if (r.kind !== 'article' || !r.artNo) return;     // 본문 조문만(부칙·별표 항목 제외)
       var checked = !!sm[r.artNo];                       // 같은 조문번호 2벌(현행+시행예정)도 각각 출력 — dedup 안 함
-      lines.push([name, label, curJang, curJeol || '-', r.text, csvArticleBody(L.rows, ri), checked ? 'O' : 'X'].map(csvCell).join(','));
+      lines.push([name, label, curJang, curJeol, r.text, csvArticleBody(L.rows, ri), checked ? 'O' : 'X'].map(csvDash).map(csvCell).join(','));
       totalArt++; if (checked) totalChecked++;
     });
   });
