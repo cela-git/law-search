@@ -1165,6 +1165,10 @@ function csvDateStamp(){
   var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
 }
+function csvTimeStamp(){   // HH-MM (파일명엔 콜론을 못 쓰므로 대시)
+  var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+  return p(d.getHours()) + '-' + p(d.getMinutes());
+}
 // 조문 본문(전문): 조문 헤딩 다음부터 다음 헤딩 전까지의 body 행을 줄바꿈으로 이어 붙임(생략 없음)
 function csvArticleBody(rows, hi){
   var out = [];
@@ -1217,7 +1221,7 @@ function exportScopeCsv(){
     var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = '점검대상_' + csvDateStamp() + '.csv';
+    a.href = url; a.download = '법률 준거성 평가 기준_' + csvDateStamp() + '_' + csvTimeStamp() + '.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   } catch (e){ setEbMsg('CSV 생성 실패: ' + ((e && e.message) || e), 'err'); return; }
