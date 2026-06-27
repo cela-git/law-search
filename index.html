@@ -79,7 +79,8 @@ body:has(> #lawapp-root){ overflow:hidden; }
 
 /* 검색 모드 세그먼트 (간단 라벨 + title 툴팁) — 검색창 옆 같은 줄 */
 #lawapp-root .lawapp-segment{ flex:0 0 auto; display:inline-flex; background:var(--c-bg); border:1px solid var(--c-border); border-radius:9px; padding:2px; gap:2px; }
-#lawapp-root .lawapp-segment button{ position:relative; font:inherit; font-size:12px; font-weight:600; cursor:pointer; background:transparent; color:var(--c-sub); padding:4px 9px; border:1px solid transparent; border-radius:7px; letter-spacing:-0.01em; white-space:nowrap; transition:color .12s ease, background .12s ease, border-color .12s ease; }
+#lawapp-root .lawapp-segment button{ position:relative; display:inline-flex; align-items:center; justify-content:center; font:inherit; cursor:pointer; background:transparent; color:var(--c-sub); padding:5px 9px; border:1px solid transparent; border-radius:7px; line-height:0; transition:color .12s ease, background .12s ease, border-color .12s ease; }
+#lawapp-root .lawapp-segment button svg{ width:15px; height:15px; display:block; }
 #lawapp-root .lawapp-segment button:hover{ color:var(--c-text); }
 #lawapp-root .lawapp-segment button.active{ background:#fff; color:var(--c-accent); box-shadow:0 1px 2px rgba(15,23,42,.10); border-color:#dbe5f5; }
 /* 빠른 커스텀 툴팁 (네이티브 title의 느린 지연 대신 ~40ms) */
@@ -332,6 +333,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-toc-item.lvl3{ padding-left:40px; color:var(--c-sub); font-size:12.5px; }
 
 #lawapp-root .lawapp-footnote{ flex:0 0 auto; padding:5px 16px; background:var(--c-panel); border-top:1px solid var(--c-border); font-size:11.5px; color:var(--c-sub); text-align:center; }
+#lawapp-root .lawapp-footnote .lawapp-ver{ margin-left:8px; opacity:.6; font-variant-numeric:tabular-nums; white-space:nowrap; }
 
 /* 요약보기 버튼 (상단 바 우측) */
 #lawapp-root .lawapp-summary-btn{ flex:0 0 auto; position:relative; margin-left:auto; display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border:1px solid var(--c-border-strong); border-radius:9px; background:#fff; font-size:12.5px; font-weight:600; color:var(--c-text); white-space:nowrap; transition:border-color .15s ease, color .15s ease, background .15s ease; }
@@ -389,9 +391,9 @@ body:has(> #lawapp-root){ overflow:hidden; }
       <button class="lawapp-search-clear" id="lawapp-search-clear" title="지우기" aria-label="검색어 지우기">✕</button>
     </div>
     <div class="lawapp-segment" id="lawapp-segment" role="tablist" aria-label="검색 모드">
-      <button type="button" data-mode="exact" data-tip="정확히 — 공백·글자까지 그대로 일치하는 결과만" aria-label="정확히">정확</button>
-      <button type="button" data-mode="loose" data-tip="띄어쓰기 무시 — '개 인정보'처럼 띄어 써도 매칭" aria-label="띄어쓰기 무시">공백무시</button>
-      <button type="button" class="active" data-mode="phrase" aria-selected="true" data-tip="문장 포함 — 한 줄에 모든 단어가 들어가면 매칭 (순서 무관, 기본)" aria-label="문장 포함">문장</button>
+      <button type="button" data-mode="exact" data-tip="정확히 — 공백·글자까지 그대로 일치하는 결과만" aria-label="정확히"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/></svg></button>
+      <button type="button" data-mode="loose" data-tip="띄어쓰기 무시 — '개 인정보'처럼 띄어 써도 매칭" aria-label="띄어쓰기 무시"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 6 9 12 5 18"/><polyline points="19 6 15 12 19 18"/></svg></button>
+      <button type="button" class="active" data-mode="phrase" aria-selected="true" data-tip="문장 포함 — 한 줄에 모든 단어가 들어가면 매칭 (순서 무관, 기본)" aria-label="문장 포함"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
     </div>
     <div class="lawapp-lawbadges" id="lawapp-lawbadges"></div>
     <span class="lawapp-scopefilter-grp" id="lawapp-scopefilter-grp" role="group" aria-label="IT·보안 점검대상 필터" hidden>
@@ -430,7 +432,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.</div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각)">v2026-06-27 22:59</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신 --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
