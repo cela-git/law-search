@@ -93,6 +93,8 @@ body:has(> #lawapp-root){ overflow:hidden; }
 /* === 분야(family) 그룹 캡슐 배지: 접힘=테두리 원 스택 / 펼침=테두리 타원으로 모핑 === */
 #lawapp-root .lawapp-cap{ display:inline-flex; align-items:center; border:1px solid var(--c-border); background:#fff; border-radius:999px; padding:3px 9px; min-height:30px; box-sizing:border-box; cursor:pointer; transition:background .3s ease, border-color .3s ease; }
 #lawapp-root .lawapp-cap.open{ background:color-mix(in srgb, var(--gc) 6%, #fff); border-color:color-mix(in srgb, var(--gc) 22%, #fff); cursor:default; }
+/* 단독 법령(상위법 없는 family): 분야 캡슐 테두리 없이 배지 하나만 — 접기/펼치기 없음 */
+#lawapp-root .lawapp-cap.lawapp-solo{ border:none; background:none; padding:0; min-height:30px; }
 #lawapp-root .lawapp-cap:not(.open) .lawapp-mbadge{ pointer-events:none; }
 #lawapp-root .lawapp-lead{ display:inline-flex; align-items:center; gap:4px; border:0; background:none; cursor:pointer; font:inherit; font-size:12px; font-weight:800; color:var(--c-sub); white-space:nowrap; padding:0; letter-spacing:-.02em; }
 #lawapp-root .lawapp-lead:hover{ color:var(--c-text); }
@@ -303,6 +305,8 @@ body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-row.lawapp-ind4{ padding-left:76px; text-indent:-16px; }  /* 1) */
 #lawapp-root .lawapp-row.lawapp-ind5{ padding-left:92px; text-indent:-20px; }  /* 가) */
 #lawapp-root .lawapp-row.lawapp-byeolpyoitem{ margin:3px 0; color:var(--c-sub); }
+/* ISMS-P 인증기준 섹션 헤더(▣ 인증기준 / 주요 확인사항 …): 볼드 + 강조색 + 위 여백으로 섹션 구분 */
+#lawapp-root .lawapp-row.lawapp-isms-head{ font-weight:700; color:var(--c-accent); margin:13px 0 4px; padding-left:11px; }
 #lawapp-root .lawapp-row mark.lawapp-hl{ background:var(--c-mark); padding:0 1px; border-radius:2px; }
 #lawapp-root .lawapp-row mark.lawapp-hl.cur{ background:var(--c-mark-cur); }
 /* 검색 결과 클릭으로 이동한 행: 사라지지 않고 계속 강조(다른 결과 클릭 시 그쪽으로 이동).
@@ -432,7 +436,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각)">v2026-06-28 18:12</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신 --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-06-28 19:05 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -602,6 +606,10 @@ function matchRow(row, q, mode){
 // '의N'(3의2 등 가지번호)을 허용. 연도("2020.")는 \d{1,3} 제한으로, 소수("1.5")는 마침표 뒤 공백/끝 요구로 배제.
 function bodyIndentLevel(text){
   var t = String(text);
+  // ISMS-P 인증기준 전용 마커(다른 법령 본문엔 등장하지 않음 — 충돌 없음)
+  if (/^▶\s/.test(t)) return 2;                     // 세부설명 하위(▶)
+  if (/^·\s/.test(t) || /^※/.test(t)) return 1;     // 불릿(·) · 비고(※)
+  if (/^사례\s*\d/.test(t)) return 1;               // 결함사례
   if (/^[①-⑳㉑-㉟㊱-㊿⓪]/.test(t)) return 1;        // ①…⑳ ㉑…㉟ ㊱…㊿ ⓪
   if (/^[가-힣](?:의\d{1,3})*\)(\s|$)/.test(t)) return 5;  // 가) 나)
   if (/^\d{1,3}(?:의\d{1,3})*\)(\s|$)/.test(t)) return 4;  // 1) 2) 3의2)
@@ -1809,6 +1817,7 @@ function renderColumnBody(ci){
   for (var i=0; i<L.rows.length; i++){
     var r = L.rows[i];
     var indCls = (r.kind === 'body' && r.indent) ? (' lawapp-ind'+r.indent) : '';   // 항·호·목 내어쓰기
+    if (r.kind === 'body' && r.text.charCodeAt(0) === 0x25A3) indCls += ' lawapp-isms-head';   // ▣ ISMS 섹션 헤더
     var f = fi.rows[r.idx], futCls = '', siAttr = '';
     if (f && f.future){ futCls = ' lawapp-future'; if (f.heading){ futCls += ' lawapp-future-head'; siAttr = ' data-si="'+escapeHtml(f.si)+'"'; } }
     var scCls = scopeGroups[r.groupKey] ? ' lawapp-sc-c' : '';   // 점검대상 필터용
@@ -2057,6 +2066,31 @@ function renderResults(){
       var ids = g.ids.filter(function(id){ return jmap[id]; });
       if (!ids.length) return;
       var head = lawGroupHead(g);
+      if (g.ids.length === 1){                        // 단독 법령(상위법 없음): 접기 없이 단일 점프 칩
+        var jid = ids[0], jit = jmap[jid];
+        var jcap = el('div', 'lawapp-cap lawapp-solo open');
+        jcap.style.setProperty('--gc', lawColor(jid));
+        var jmem = el('div', 'lawapp-mem');
+        var jb = el('button', 'lawapp-jump-chip lawapp-mbadge'); jb.type = 'button';
+        jb.setAttribute('data-jump', jid);
+        jb.style.setProperty('--c', lawColor(jid));
+        jb.title = lawDisplay(jid) + '로 이동';
+        jb.setAttribute('aria-label', lawDisplay(jid) + '로 이동');
+        var jabbr = lawAbbr(jid);
+        var jch = el('span', 'lawapp-mch'); jch.textContent = jabbr.slice(0, 1);
+        var jrest = el('span', 'lawapp-mrest'); jrest.setAttribute('aria-hidden', 'true');
+        var jrestIn = el('span', 'lawapp-mrest-in'); var jrs = el('span'); jrs.textContent = jabbr.slice(1);
+        jrestIn.appendChild(jrs); jrest.appendChild(jrestIn);
+        var jmc = el('span', 'lawapp-mcnt'); jmc.textContent = jit.total;
+        jb.appendChild(jch); jb.appendChild(jrest); jb.appendChild(jmc);
+        jb.addEventListener('click', function(e){
+          e.stopPropagation();
+          var r1 = jit.headEl.getBoundingClientRect(), r0 = scroll.getBoundingClientRect();
+          scroll.scrollTop += (r1.top - r0.top) - 30;
+        });
+        jmem.appendChild(jb); jcap.appendChild(jmem); jump.appendChild(jcap);
+        return;
+      }
       var expanded = !!jumpExpanded[g.family];
       var cap = el('div', 'lawapp-cap' + (expanded ? ' open' : ''));
       cap.style.setProperty('--gc', lawColor(head));
@@ -2174,6 +2208,31 @@ function renderLawBadges(){
   // 분야(family)별 캡슐: 접힘=약자+겹친 원 / 펼침=테두리 타원 배지. 순서는 요약표와 동일.
   summaryGroups().forEach(function(g, gi){
     var head = lawGroupHead(g);
+    if (g.ids.length === 1){                        // 단독 법령(상위법 없음): 접기 없이 단일 배지
+      var id1 = head;
+      var open1 = findColumnWithLaw(id1) !== -1;
+      var total1 = searching ? (state.resultTotals[id1] || 0) : 0;
+      var cap1 = el('div', 'lawapp-cap lawapp-solo open');
+      cap1.style.setProperty('--gc', lawColor(id1));
+      var mem1 = el('div', 'lawapp-mem');
+      var cls1 = 'lawapp-lawbadge lawapp-mbadge ' + (open1 ? 'on' : 'off') + ((searching && !open1 && total1 === 0) ? ' zero' : '');
+      var b1 = el('button', cls1); b1.type = 'button';
+      b1.setAttribute('data-id', id1);
+      b1.style.setProperty('--c', lawColor(id1));
+      b1.setAttribute('aria-pressed', open1 ? 'true' : 'false');
+      b1.setAttribute('data-tip', lawDisplay(id1) + (open1 ? '  (켜짐 · 클릭하면 닫기)' : '  (클릭하면 열기)'));
+      b1.setAttribute('aria-label', (open1 ? '열 닫기: ' : '열 열기: ') + lawDisplay(id1));
+      var abbr1 = lawAbbr(id1);
+      var ch1 = el('span', 'lawapp-mch'); ch1.textContent = abbr1.slice(0, 1);
+      var rest1 = el('span', 'lawapp-mrest'); rest1.setAttribute('aria-hidden', 'true');
+      var restIn1 = el('span', 'lawapp-mrest-in'); var rs1 = el('span'); rs1.textContent = abbr1.slice(1);
+      restIn1.appendChild(rs1); rest1.appendChild(restIn1);
+      b1.appendChild(ch1); b1.appendChild(rest1);
+      if (searching && total1 > 0){ var mc1 = el('span', 'lawapp-mcnt'); mc1.textContent = total1; b1.appendChild(mc1); }
+      b1.addEventListener('click', function(e){ e.stopPropagation(); toggleLawColumn(id1); });
+      mem1.appendChild(b1); cap1.appendChild(mem1); wrap.appendChild(cap1);
+      return;
+    }
     var expanded = !!lawBadgeExpanded[g.family];   // 검색 중에도 자동 펼치지 않음(접힘 유지)
     var cap = el('div', 'lawapp-cap' + (expanded ? ' open' : ''));
     cap.style.setProperty('--gc', lawColor(head));
