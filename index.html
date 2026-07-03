@@ -270,8 +270,8 @@ body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-xlink:focus-visible{ outline:2px solid var(--c-accent); outline-offset:1px; border-radius:3px; }
 #lawapp-root .lawapp-xref .sep{ color:var(--c-border-strong); margin:0 3px; }
 #lawapp-root .lawapp-xref-more{ color:var(--c-sub); font-weight:500; }
-#lawapp-root .lawapp-xlink[data-tip]::after{ content:attr(data-tip); position:absolute; top:calc(100% + 6px); left:0; z-index:50; width:max-content; max-width:240px; white-space:normal; text-align:left; background:#0f172a; color:#fff; font-size:11px; font-weight:500; line-height:1.45; letter-spacing:-0.01em; padding:5px 8px; border-radius:7px; box-shadow:0 6px 16px rgba(15,23,42,.20); opacity:0; visibility:hidden; transform:translateY(-2px); transition:opacity .1s ease, transform .1s ease, visibility .1s ease; transition-delay:.04s; pointer-events:none; }
-#lawapp-root .lawapp-xlink[data-tip]:hover::after{ opacity:1; visibility:visible; transform:translateY(0); }
+#lawapp-root .lawapp-xlink[data-tip]::after{ content:attr(data-tip); position:absolute; top:calc(100% + 6px); left:0; z-index:50; width:max-content; max-width:240px; white-space:normal; text-align:left; background:#0f172a; color:#fff; font-size:11px; font-weight:500; line-height:1.45; letter-spacing:-0.01em; padding:5px 8px; border-radius:7px; box-shadow:0 6px 16px rgba(15,23,42,.20); display:none; pointer-events:none; }  /* display:none: 숨김 시 레이아웃에서 완전 제거 — position:absolute + visibility:hidden은 scrollWidth를 늘려 가로 스크롤을 유발했음 */
+#lawapp-root .lawapp-xlink[data-tip]:hover::after{ display:block; }
 /* 대상 필터 동작: 켜면 점검대상(C) 조문만 본문·목차에서 표시 */
 #lawapp-root.lawapp-fc .lawapp-col-body .lawapp-row,
 #lawapp-root.lawapp-fc .lawapp-toc-item{ display:none; }
@@ -316,9 +316,10 @@ body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-row.lawapp-isms-d2{ padding-left:52px; }   /* 세부 하위(▶)·비고(※) */
 #lawapp-root .lawapp-row.lawapp-isms-d3{ padding-left:74px; }   /* 법조문 호(1.) */
 #lawapp-root .lawapp-row.lawapp-isms-d4{ padding-left:96px; }   /* 목(가.)·세목(1)·가)) */
-/* GFM 표(주로 ISMS 세부설명): 세부설명 아래로 들여쓰고, 넓으면 가로 스크롤 */
-#lawapp-root .lawapp-row.lawapp-table{ margin:7px 0 9px 30px; overflow-x:auto; padding:0; }
-#lawapp-root .lawapp-table{ border-collapse:collapse; width:100%; font-size:12.5px; line-height:1.5; }
+/* GFM 표(주로 ISMS 세부설명): 들여쓰기는 margin이 아니라 border-box 안쪽 padding으로
+   (margin은 폭 밖으로 밀어내 열 너비를 넘김 → 가로 스크롤 유발). 표는 width:100%로 열 안에 딱 맞춤. */
+#lawapp-root .lawapp-row.lawapp-table{ margin:7px 0 9px; padding:0 0 0 20px; overflow-x:auto; }
+#lawapp-root .lawapp-table{ border-collapse:collapse; width:100%; max-width:100%; font-size:12.5px; line-height:1.5; }
 #lawapp-root .lawapp-table th, #lawapp-root .lawapp-table td{ border:1px solid var(--c-border-strong); padding:5px 8px; text-align:left; vertical-align:top; word-break:break-word; }
 #lawapp-root .lawapp-table th{ background:var(--c-accent-weak); color:var(--c-text); font-weight:700; }
 #lawapp-root .lawapp-row mark.lawapp-hl{ background:var(--c-mark); padding:0 1px; border-radius:2px; }
@@ -450,7 +451,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-06-28 21:53 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-07-04 02:29 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
