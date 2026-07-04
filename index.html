@@ -52,7 +52,11 @@
    생기던 '안쪽 스크롤' 제거. #lawapp-root이 body 직속일 때만 적용되므로(:has),
    아임웹 페이지에 인라인 삽입해도 호스트 레이아웃엔 영향 없음. */
 html:has(> body > #lawapp-root), body:has(> #lawapp-root){ margin:0; padding:0; height:100%; }
-body:has(> #lawapp-root){ overflow:hidden; }
+/* html도 overflow:hidden — body만 hidden이면 html(overflow:visible)이 넘친 콘텐츠를 스크롤해
+   페이지 전체가 가로로 밀렸음(숨은 [data-tip]::after 툴팁이 뷰포트를 살짝 넘겨 유발).
+   앱은 뷰포트 고정 레이아웃이라 페이지 자체 스크롤이 필요 없고, 열-간 가로 스크롤은
+   .lawapp-columns 내부 컨테이너가 담당하므로 이 클립은 그 동작에 영향 없음. */
+html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root button{ font:inherit; color:inherit; cursor:pointer; background:none; border:none; }
 #lawapp-root select{ font:inherit; color:inherit; }
 
@@ -285,7 +289,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-matchcount{ font-size:11.5px; min-width:38px; text-align:center; }
 
 /* 열 본문 */
-#lawapp-root .lawapp-col-body{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:16px 18px 60vh 18px; position:relative; word-break:keep-all; }
+#lawapp-root .lawapp-col-body{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:16px 18px 60vh 18px; position:relative; word-break:keep-all; overflow-wrap:anywhere; }/* overflow-wrap:anywhere — 'ㆍ'로 이어진 공백 없는 긴 기관명 제목(예: 한국정보보호진흥원ㆍ한국인터넷진흥원ㆍ…)이 keep-all로 안 끊겨 좁은 열에서 가로 넘침을 만들던 것 차단. 일반 한국어는 keep-all로 단어단위 줄바꿈 유지, 과長 토큰만 임의 지점 분절 */
 #lawapp-root .lawapp-col-empty{ display:flex; height:100%; align-items:center; justify-content:center; text-align:center; color:var(--c-sub); font-size:13.5px; padding:20px; }
 #lawapp-root .lawapp-empty-all{ flex:1 1 auto; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--c-sub); font-size:14px; padding:30px; line-height:1.8; background:var(--c-bg); }
 #lawapp-root .lawapp-col-loading,#lawapp-root .lawapp-col-error{ padding:24px 8px; text-align:center; color:var(--c-sub); font-size:13.5px; }
@@ -451,7 +455,7 @@ body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-07-04 02:29 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-07-04 14:47 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
