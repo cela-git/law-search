@@ -326,6 +326,8 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-table{ border-collapse:collapse; width:100%; max-width:100%; font-size:12.5px; line-height:1.5; }
 #lawapp-root .lawapp-table th, #lawapp-root .lawapp-table td{ border:1px solid var(--c-border-strong); padding:5px 8px; text-align:left; vertical-align:top; word-break:break-word; }
 #lawapp-root .lawapp-table th{ background:var(--c-accent-weak); color:var(--c-text); font-weight:700; }
+/* 세로 병합된 그룹 라벨 칸(분야·구분): 가운데 정렬 + 옅은 배경으로 그룹감 부여 → 빈 칸 흩어짐 제거 */
+#lawapp-root .lawapp-table td.lawapp-tv{ vertical-align:middle; background:#f8fafc; font-weight:600; }
 #lawapp-root .lawapp-row mark.lawapp-hl{ background:var(--c-mark); padding:0 1px; border-radius:2px; }
 #lawapp-root .lawapp-row mark.lawapp-hl.cur{ background:var(--c-mark-cur); }
 /* 검색 결과 클릭으로 이동한 행: 사라지지 않고 계속 강조(다른 결과 클릭 시 그쪽으로 이동).
@@ -455,7 +457,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-07-31 21:02 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-07-31 21:53 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -946,14 +948,31 @@ function tableCellHtml(cell, q){
   }).join('<br>');
 }
 // 표 행 -> <table> HTML (첫 행=헤더). q 있으면 셀 안 검색어 강조.
+// 세로 병합: 데이터행의 빈 칸은 같은 열 위쪽 셀에 rowspan으로 합친다(분야·구분 그룹 라벨이
+// 빈 칸으로 흩어져 어수선하던 것 → 그룹당 한 칸으로 묶어 안정감 있게).
 function buildTableHtml(trows, q){
   if (!trows || !trows.length) return '';
+  var n = trows.length, ncol = 0, i, j, c;
+  for (i = 0; i < n; i++) ncol = Math.max(ncol, trows[i].length);
+  var span = [], skip = [];
+  for (i = 0; i < n; i++){ span.push([]); skip.push([]); }
+  var cellV = function(r, col){ return String(trows[r][col] == null ? '' : trows[r][col]).trim(); };
+  for (c = 0; c < ncol; c++){
+    var anchor = -1;
+    for (i = 1; i < n; i++){                                  // 헤더(0) 제외
+      if (cellV(i, c) === '' && anchor !== -1){               // 빈 칸 → 위 앵커에 합침
+        skip[i][c] = true; span[anchor][c] = (span[anchor][c] || 1) + 1;
+      } else { anchor = i; span[i][c] = span[i][c] || 1; }
+    }
+  }
   var h = '<table class="lawapp-table"><tbody>';
-  for (var i = 0; i < trows.length; i++){
+  for (i = 0; i < n; i++){
     h += '<tr>';
-    for (var j = 0; j < trows[i].length; j++){
+    for (j = 0; j < trows[i].length; j++){
+      if (i > 0 && skip[i][j]) continue;                      // 위로 병합돼 사라진 칸
       var tag = (i === 0) ? 'th' : 'td';
-      h += '<' + tag + '>' + tableCellHtml(trows[i][j], q) + '</' + tag + '>';
+      var rs = (i > 0 && span[i][j] > 1) ? (' rowspan="' + span[i][j] + '" class="lawapp-tv"') : '';
+      h += '<' + tag + rs + '>' + tableCellHtml(trows[i][j], q) + '</' + tag + '>';
     }
     h += '</tr>';
   }
