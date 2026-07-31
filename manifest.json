@@ -49,6 +49,42 @@
       "order": 13
     },
     {
+      "id": "TELECOM_ACT",
+      "file": "laws/TELECOM_ACT.md",
+      "title": "전기통신사업법",
+      "short": "전기통신사업법",
+      "type": "법률",
+      "category": "전기통신",
+      "no": "법률 제21652호",
+      "enforced": "2026-05-19",
+      "version": "20260519",
+      "order": 14
+    },
+    {
+      "id": "TELECOM_DECREE",
+      "file": "laws/TELECOM_DECREE.md",
+      "title": "전기통신사업법 시행령",
+      "short": "전기통신사업법 시행령",
+      "type": "대통령령",
+      "category": "전기통신",
+      "no": "대통령령 제36281호",
+      "enforced": "2026-04-28",
+      "version": "20260428",
+      "order": 15
+    },
+    {
+      "id": "TELECOM_TRANSMIT_STANDARD",
+      "file": "laws/TELECOM_TRANSMIT_STANDARD.md",
+      "title": "전송자격인증기준 등에 관한 고시",
+      "short": "전송자격인증기준 등에 관한 고시",
+      "type": "행정규칙",
+      "category": "전기통신",
+      "no": "방송미디어통신위원회고시 제2026-1호",
+      "enforced": "2026-04-28",
+      "version": "20260428",
+      "order": 16
+    },
+    {
       "id": "PIPA_ACT",
       "file": "laws/PIPA_ACT.md",
       "title": "개인정보 보호법",
