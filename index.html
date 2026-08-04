@@ -382,6 +382,28 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-modal-body{ flex:1 1 auto; min-height:0; overflow:auto; }
 #lawapp-root .lawapp-modal-foot{ flex:0 0 auto; padding:10px 20px; border-top:1px solid var(--c-border); font-size:11.5px; color:var(--c-sub); line-height:1.5; }
 #lawapp-root .lawapp-modal-empty{ padding:48px 20px; text-align:center; color:var(--c-sub); font-size:14px; }
+/* 제재 조문 미리보기 팝업 — 클릭한 칩 옆에 띄워 읽던 위치를 잃지 않게 한다.
+   #lawapp-root 직속 + position:fixed: 열 본문(.lawapp-col-body overflow-y:auto)·열 컨테이너
+   (.lawapp-columns overflow-x:auto)에 잘리지 않는다. 숨김은 반드시 display:none —
+   position:absolute+visibility:hidden 은 scrollWidth를 부풀려 가로 스크롤을 유발한 전례가 있다. */
+#lawapp-root .lawapp-pop{ display:none; position:fixed; z-index:120; width:min(440px,92vw); background:var(--c-panel); border:1px solid var(--c-border-strong); border-radius:12px; box-shadow:var(--shadow-md); overflow:hidden; flex-direction:column; }
+#lawapp-root .lawapp-pop.show{ display:flex; }
+#lawapp-root .lawapp-pop-head{ flex:0 0 auto; display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border-bottom:1px solid var(--c-border); background:#fffaf3; }
+#lawapp-root .lawapp-pop-kind{ flex:none; margin-top:1px; padding:1px 6px; border-radius:5px; background:#b45309; color:#fff; font-size:10.5px; font-weight:700; white-space:nowrap; }
+#lawapp-root .lawapp-pop-ttl{ flex:1 1 auto; min-width:0; font-size:12.5px; font-weight:700; color:var(--c-text); line-height:1.4; }
+#lawapp-root .lawapp-pop-sev{ display:block; margin-top:2px; font-size:11px; font-weight:600; color:#b45309; line-height:1.45; }
+#lawapp-root .lawapp-pop-close{ flex:none; width:24px; height:24px; border-radius:6px; color:var(--c-sub); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
+#lawapp-root .lawapp-pop-close:hover{ background:var(--c-badge); color:var(--c-danger); }
+#lawapp-root .lawapp-pop-body{ flex:1 1 auto; min-height:0; max-height:min(50vh,380px); overflow-y:auto; padding:10px 13px 12px; font-size:12.5px; line-height:1.62; color:var(--c-text); word-break:keep-all; overflow-wrap:anywhere; }
+#lawapp-root .lawapp-pop-body .lawapp-row{ margin:0 0 3px; }
+#lawapp-root .lawapp-pop-foot{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 12px; border-top:1px solid var(--c-border); background:var(--c-bg); }
+#lawapp-root .lawapp-pop-hint{ font-size:10.5px; color:var(--c-sub); }
+#lawapp-root .lawapp-pop-go{ flex:none; padding:4px 9px; border:1px solid var(--c-border-strong); border-radius:7px; background:#fff; font-size:11px; font-weight:700; color:var(--c-text); cursor:pointer; white-space:nowrap; }
+#lawapp-root .lawapp-pop-go:hover{ border-color:var(--c-accent); color:var(--c-accent); }
+@media (max-width:768px){    /* 모바일: 좌표 계산 대신 하단 시트 */
+  #lawapp-root .lawapp-pop.show{ left:8px !important; right:8px !important; bottom:8px !important; top:auto !important; width:auto; }
+  #lawapp-root .lawapp-pop-body{ max-height:46vh; }
+}
 
 /* 요약 테이블 */
 #lawapp-root .lawapp-sumtable{ width:100%; min-width:760px; border-collapse:collapse; font-size:13px; }
@@ -461,7 +483,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 16:16 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 16:31 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -471,6 +493,18 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
       </div>
       <div class="lawapp-modal-body" id="lawapp-summary-body"></div>
       <div class="lawapp-modal-foot">시행일·공포번호는 목록(manifest) 기준, 소관 부처·공포일·개정구분은 법령 원문 기준입니다. ‘시행 예정 법령’·‘비고’는 직접 관리하는 항목으로 최신 여부는 law.go.kr에서 확인하세요. 법률명을 클릭하면 해당 법령이 열로 열립니다.</div>
+    </div>
+  </div>
+  <div class="lawapp-pop" id="lawapp-pen-pop" role="dialog" aria-label="제재 조문 미리보기">
+    <div class="lawapp-pop-head">
+      <span class="lawapp-pop-kind" id="lawapp-pen-pop-kind">벌칙</span>
+      <span class="lawapp-pop-ttl" id="lawapp-pen-pop-ttl"></span>
+      <button class="lawapp-pop-close" id="lawapp-pen-pop-close" title="닫기 (Esc)" aria-label="닫기">&times;</button>
+    </div>
+    <div class="lawapp-pop-body" id="lawapp-pen-pop-body"></div>
+    <div class="lawapp-pop-foot">
+      <span class="lawapp-pop-hint">Esc·바깥 클릭으로 닫기</span>
+      <button class="lawapp-pop-go" id="lawapp-pen-pop-go">이 조문으로 이동 →</button>
     </div>
   </div>
 </div>
@@ -1074,6 +1108,7 @@ function init(){
   bindScopeFilter();
   bindEditor();
   bindXrefLinks();
+  bindPenPop();
   var reopen = $('#lawapp-results-reopen');
   if (reopen) reopen.addEventListener('click', function(){ toggleResults(false); });
   setupAutoFocus();
@@ -1428,15 +1463,105 @@ function bindXrefLinks(){
     var lid = b.getAttribute('data-law');
     if (!lid || !state.laws[lid]) return;
     var art = b.getAttribute('data-art');
-    var ci = openLaw(lid);
-    if (ci < 0) return;
-    touchColumn(ci);
-    if (art){
-      var L = state.laws[lid], idx = -1;
-      for (var k = 0; k < L.rows.length; k++){ var rr = L.rows[k]; if (rr.isHeading && rr.kind === 'article' && rr.artNo === art){ idx = rr.idx; break; } }
-      if (idx >= 0) requestAnimationFrame(function(){ scrollRowToCenter(ci, idx, true); });
-    }
+    // 제재(⚖) 링크는 '같은 법' 안을 가리키므로 이동하면 읽던 위치를 잃는다 → 팝업 미리보기.
+    // 위임(▸)·근거(↑) 링크는 '다른 법'이라 지금처럼 열로 여는 것이 맞다.
+    if (b.getAttribute('data-pen')){ openPenPop(b, lid, art); return; }
+    jumpToArticle(lid, art, null);
   });
+}
+// 대상 법의 조문 위치로 이동(열이 없으면 연다). si가 있으면 그 미시행 개정본 블록으로.
+function jumpToArticle(lid, art, si){
+  var ci = openLaw(lid);
+  if (ci < 0) return;
+  touchColumn(ci);
+  if (!art) return;
+  var L = state.laws[lid], i = findArtRowIdx(L, art, si);
+  if (i >= 0) requestAnimationFrame(function(){ scrollRowToCenter(ci, L.rows[i].idx, true); });
+}
+// 조문 제목 행 위치 — si가 있으면 시행예정 블록, 없으면 현행 블록(같은 조번호 2벌 대응)
+function findArtRowIdx(L, art, si){
+  if (!L || !L.rows) return -1;
+  var fi = futureInfo(L), first = -1, i, r, f;
+  for (i = 0; i < L.rows.length; i++){
+    r = L.rows[i];
+    if (!(r.isHeading && r.kind === 'article' && r.artNo === art)) continue;
+    if (first < 0) first = i;
+    f = fi.rows[r.idx];
+    if (si ? !!(f && f.future) : !(f && f.future)) return i;
+  }
+  return first;
+}
+
+/* ── 제재 조문 미리보기 팝업 ─────────────────────────────────────────────── */
+var penPopAnchor = null;
+function penPopContentHtml(L, startI){
+  var out = '', i, r;
+  for (i = startI + 1; i < L.rows.length; i++){
+    r = L.rows[i];
+    if (r.isHeading) break;
+    if (r.kind === 'table'){ out += '<div class="lawapp-row">' + buildTableHtml(r.table, null) + '</div>'; continue; }
+    if (r.kind !== 'body') continue;
+    out += '<div class="lawapp-row lawapp-body' + (r.indent ? (' lawapp-ind' + r.indent) : '') + '">' + rowBaseHtml(L, r.idx) + '</div>';
+  }
+  return out || '<div class="lawapp-pop-hint">조문 본문이 없습니다.</div>';
+}
+function openPenPop(anchor, lid, art){
+  var pop = $('#lawapp-pen-pop'), L = state.laws[lid];
+  if (!pop || !L || !L.loaded) return;
+  var si = anchor.getAttribute('data-si') || null;
+  var i = findArtRowIdx(L, art, si);
+  if (i < 0) return;
+  var head = L.rows[i];
+  $('#lawapp-pen-pop-kind').textContent = anchor.getAttribute('data-pen') || '제재';
+  var sev = anchor.getAttribute('data-sev') || '';
+  $('#lawapp-pen-pop-ttl').innerHTML = escapeHtml(lawDisplay(lid) + ' ' + head.text)
+    + (si ? ' <span class="lawapp-pop-sev">[시행 ' + escapeHtml(si) + ' — 미시행 개정본]</span>' : '')
+    + (sev ? '<span class="lawapp-pop-sev">' + escapeHtml(sev) + '</span>' : '');
+  $('#lawapp-pen-pop-body').innerHTML = penPopContentHtml(L, i);
+  $('#lawapp-pen-pop-body').scrollTop = 0;
+  pop.setAttribute('data-law', lid); pop.setAttribute('data-art', art);
+  if (si) pop.setAttribute('data-si', si); else pop.removeAttribute('data-si');
+  penPopAnchor = anchor;
+  pop.classList.add('show');          // 먼저 표시해야 크기를 잴 수 있다(display:none이면 0)
+  placePenPop();
+}
+function placePenPop(){
+  var pop = $('#lawapp-pen-pop');
+  if (!pop || !pop.classList.contains('show') || !penPopAnchor) return;
+  if (isMobile()){ pop.style.left = ''; pop.style.top = ''; return; }   // 모바일은 CSS 하단 시트
+  var a = penPopAnchor.getBoundingClientRect();
+  var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  var pw = pop.offsetWidth, ph = pop.offsetHeight;
+  var left = Math.max(8, Math.min(a.left, vw - pw - 8));
+  var top = a.bottom + 6;
+  if (top + ph > vh - 8) top = a.top - ph - 6;                          // 아래 공간 부족 → 위로 뒤집기
+  top = Math.max(8, Math.min(top, vh - ph - 8));                        // 앵커가 화면 밖이어도 팝업은 항상 보이게
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+}
+function closePenPop(){
+  var pop = $('#lawapp-pen-pop');
+  if (pop && pop.classList.contains('show')){ pop.classList.remove('show'); pop.style.left = ''; pop.style.top = ''; }
+  penPopAnchor = null;
+}
+function bindPenPop(){
+  var pop = $('#lawapp-pen-pop');
+  if (!pop) return;
+  var close = $('#lawapp-pen-pop-close');
+  if (close) close.addEventListener('click', closePenPop);
+  var go = $('#lawapp-pen-pop-go');
+  if (go) go.addEventListener('click', function(){
+    var lid = pop.getAttribute('data-law'), art = pop.getAttribute('data-art'), si = pop.getAttribute('data-si');
+    closePenPop();
+    jumpToArticle(lid, art, si);
+  });
+  document.addEventListener('click', function(e){        // 바깥 클릭 닫기(연 클릭 자체는 제외)
+    if (!pop.classList.contains('show')) return;
+    if (e.target.closest && (e.target.closest('#lawapp-pen-pop') || e.target.closest('.lawapp-xlink[data-pen]'))) return;
+    closePenPop();
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePenPop(); });
+  window.addEventListener('resize', closePenPop);
 }
 
 // 진입 시 검색창에 커서를 둔다. 교차출처 iframe에서는 로드시 자동 포커스가 차단될 수 있어,
@@ -1746,7 +1871,7 @@ function buildColumnEl(col, ci){
   colEl.appendChild(head);
 
   var body = el('div','lawapp-col-body'); body.setAttribute('data-col', ci);
-  body.addEventListener('scroll', function(){ touchColumn(ci); scheduleSaveUiState(); }, { passive:true });
+  body.addEventListener('scroll', function(){ touchColumn(ci); scheduleSaveUiState(); closePenPop(); }, { passive:true });   // 스크롤하면 앵커가 어긋나므로 닫는다
   colEl.appendChild(body);
 
   var toc = el('div','lawapp-toc'); toc.setAttribute('data-col', ci);
@@ -2066,9 +2191,9 @@ function xrefRoleLabel(sid){
   if (tm.type === '법률') return '법';
   return tm.short || sid;
 }
-function xlinkBtn(lawId, art, label, tipExtra){
-  var tip = lawDisplay(lawId) + ' ' + art + (tipExtra ? (' · ' + tipExtra) : '') + ' · 클릭하면 해당 조문 열기';
-  return '<button type="button" class="lawapp-xlink" data-law="' + escapeHtml(lawId) + '" data-art="' + escapeHtml(art) + '" data-tip="' + escapeHtml(tip) + '">' + escapeHtml(label) + '</button>';
+function xlinkBtn(lawId, art, label, tipExtra, extraAttr, tipTail){
+  var tip = lawDisplay(lawId) + ' ' + art + (tipExtra ? (' · ' + tipExtra) : '') + ' · ' + (tipTail || '클릭하면 해당 조문 열기');
+  return '<button type="button" class="lawapp-xlink"' + (extraAttr || '') + ' data-law="' + escapeHtml(lawId) + '" data-art="' + escapeHtml(art) + '" data-tip="' + escapeHtml(tip) + '">' + escapeHtml(label) + '</button>';
 }
 var XREF_MAX = 6;   // 한 줄에 표시할 최대 후보 수
 // 후보가 이 줄(hang/ho)에 얼마나 정확히 맞는지 — 작을수록 우선(0=호/항 정확, 1=항만, 2=조만, 3=기타)
@@ -2126,7 +2251,9 @@ function xrefPenRowHtml(L, row){
     var links = byKind[k].map(function(e){
       var label = e.penArt + (e.hang != null ? hangMark(e.hang) : '') + (e.verLabel ? ('[' + e.verLabel + ']') : '');
       var tip = e.kind + ((e.penTitle && e.penTitle !== e.kind) ? ('(' + e.penTitle + ')') : '') + (e.sev ? (' · ' + e.sev) : '') + (e.si ? (' · [시행 ' + e.si + ']') : '');
-      return xlinkBtn(lid, e.penArt, label, tip);
+      // data-pen: 클릭 시 이동 대신 팝업으로 미리보기(읽던 위치 유지). si=미시행 개정본 지정.
+      var attr = ' data-pen="' + escapeHtml(e.kind) + '"' + (e.si ? (' data-si="' + escapeHtml(e.si) + '"') : '') + (e.sev ? (' data-sev="' + escapeHtml(e.sev) + '"') : '');
+      return xlinkBtn(lid, e.penArt, label, tip, attr, '클릭하면 조문 내용 보기');
     }).join('<span class="sep">·</span>');
     return '<span class="lawapp-xref-role">' + escapeHtml(k) + '</span> ' + links;
   }).join('<span class="sep"> · </span>');
@@ -2162,6 +2289,7 @@ function scopeCellHtml(lawId, artNo){
 function renderColumnBody(ci){
   var body = document.querySelector('.lawapp-col-body[data-col="'+ci+'"]');
   if (!body) return;
+  closePenPop();   // 재렌더로 앵커 DOM이 사라지므로 먼저 닫는다
   var col = state.columns[ci];
   if (!col.lawId){ body.innerHTML=''; var em=el('div','lawapp-col-empty'); em.innerHTML='상단의 법령별 배지를 켜거나,<br>검색 결과를 클릭하면 이 열에 열립니다.'; body.appendChild(em); return; }
   var L = state.laws[col.lawId];
@@ -2863,6 +2991,7 @@ function moveMatch(ci, dir){
 function applyColumnHighlights(ci){
   var body = document.querySelector('.lawapp-col-body[data-col="'+ci+'"]');
   if (!body) return;
+  closePenPop();   // 매칭 행의 innerHTML을 다시 쓰므로 팝업 앵커가 사라진다(검색·매칭 이동)
   var col = state.columns[ci];
   Array.prototype.forEach.call(body.querySelectorAll('.lawapp-row.lawapp-hled'), function(rowEl){
     var idx = +rowEl.getAttribute('data-line');
@@ -3050,6 +3179,7 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     autoUpcoming: autoUpcoming, autoUpcomingLines: autoUpcomingLines,
     futureInfo: futureInfo, diffFutureLines: diffFutureLines, diffAddRanges: diffAddRanges,
     getXref: getXref, penKindOf: penKindOf, parsePenCites: parsePenCites, penSeverity: penSeverity, penExcelText: penExcelText,
+    openPenPop: openPenPop, closePenPop: closePenPop, findArtRowIdx: findArtRowIdx, jumpToArticle: jumpToArticle,
     setColumns: function(ids){ state.columns = (ids||[]).filter(function(id){ return state.laws[id]; }).map(function(id){ return newColumn(id); }); renderColumns(); renderLawBadges(); saveUiState(); },
     enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeExcel: exportScopeExcel,
     editChangeCount: editChangeCount, scopeCellHtml: scopeCellHtml, effScope: effScope, cloneScope: cloneScope,
