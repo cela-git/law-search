@@ -434,8 +434,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
   <div class="lawapp-edit-bar" id="lawapp-edit-bar">
     <div class="lawapp-eb-row"><span class="lawapp-eb-ttl">점검대상 편집 중</span><span class="lawapp-eb-cnt" id="lawapp-eb-cnt">변경 0건</span></div>
     <div class="lawapp-eb-msg" id="lawapp-eb-msg">조문 제목 옆 C를 눌러 추가/제거하세요.</div>
-    <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-csv" id="lawapp-eb-csv">현재 점검대상 CSV 추출</button></div>
-    <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-csv lawapp-eb-xlsx" id="lawapp-eb-xlsx">현재 점검대상 Excel 추출 (CELA)</button></div>
+    <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-csv lawapp-eb-xlsx" id="lawapp-eb-xlsx">현재 점검대상 Excel 추출</button></div>
     <input type="text" class="lawapp-eb-input" id="lawapp-eb-editor" placeholder="작성자 (필수)" maxlength="60" autocomplete="off" aria-label="작성자">
     <textarea class="lawapp-eb-input" id="lawapp-eb-note" placeholder="메모 (필수 · 커밋에 기록 · 여러 줄 가능)" maxlength="200" rows="2" autocomplete="off" aria-label="메모"></textarea>
     <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-cancel" id="lawapp-eb-cancel">취소</button><button type="button" class="lawapp-eb-save" id="lawapp-eb-save" disabled>저장</button></div>
@@ -460,7 +459,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 13:01 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 14:16 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -1131,7 +1130,6 @@ function bindEditor(){
   if (login) login.addEventListener('click', function(e){ if (e.target === login) closeLogin(); });
   var ebc = $('#lawapp-eb-cancel'); if (ebc) ebc.addEventListener('click', exitEditMode);
   var ebs = $('#lawapp-eb-save'); if (ebs) ebs.addEventListener('click', saveScope);
-  var ebcsv = $('#lawapp-eb-csv'); if (ebcsv) ebcsv.addEventListener('click', exportScopeCsv);
   var ebxlsx = $('#lawapp-eb-xlsx'); if (ebxlsx) ebxlsx.addEventListener('click', exportScopeExcel);
   var ebEditor = $('#lawapp-eb-editor'); if (ebEditor) ebEditor.addEventListener('input', updateEditCount);
   var ebNote = $('#lawapp-eb-note'); if (ebNote) ebNote.addEventListener('input', updateEditCount);
@@ -1259,18 +1257,10 @@ function saveScope(){
     .catch(function(){ setEbMsg('서버 연결 실패.', 'err'); if (sv) sv.disabled = false; });
 }
 
-// ── 점검대상 CSV 추출 ──────────────────────────────────────────────────
-// 편집 화면의 '현재 적용 상태'(state.editScope)를 기준으로 전 법령·전 조문을 나열하고
-// 민간기업 점검대상 여부를 O/X로 표기한 CSV를 내려받는다. 모든 법은 시작 시 loadAllLaws로
-// 이미 로딩돼 있어 추가 요청 없이 클라이언트에서 즉시 생성한다(서버 불필요).
-function csvCell(v){
-  v = (v == null) ? '' : String(v);
-  return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;   // 쉼표·따옴표·개행 포함 시 따옴표 감싸기
-}
-function csvDash(v){   // 빈 값(장·절·본문 등)은 '-'로 표기
-  v = (v == null) ? '' : String(v);
-  return v.trim() === '' ? '-' : v;
-}
+// ── 점검대상 추출 공통 유틸(날짜/시각/본문/라벨) ────────────────────────────
+// 편집 화면의 '현재 적용 상태'(state.editScope, 없으면 state.scope)를 기준으로 전 법령·전
+// 조문을 나열하고 민간기업 점검대상 여부를 O/X로 표기해 엑셀(.xls)로 내려받는다. 모든 법은
+// 시작 시 loadAllLaws로 이미 로딩돼 있어 추가 요청 없이 클라이언트에서 즉시 생성한다(서버 불필요).
 function csvDateStamp(){
   var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
@@ -1295,81 +1285,36 @@ function csvLawLabel(mm, name){
   if (d.length === 3) return name + ' [시행 ' + parseInt(d[0], 10) + '. ' + parseInt(d[1], 10) + '. ' + parseInt(d[2], 10) + ']';
   return name;
 }
-function exportScopeCsv(){
-  var scope = state.editMode ? (state.editScope || {}) : (state.scope || {});
-  var header = ['법령명', '법령(시행일)', '장', '절', '조문', '본문(전문)', '점검대상'];
-  var lines = [header.map(csvCell).join(',')];
-  var totalArt = 0, totalChecked = 0, missing = 0;
-  state.order.forEach(function(id){
-    var L = state.laws[id]; if (!L) return;
-    var mm = L.manifestMeta || {};
-    var name = mm.short || mm.title || id, label = csvLawLabel(mm, name);
-    var sm = scope[id] || {};
-    if (!L.loaded || !L.rows || !L.rows.length){     // 본문 미로딩(드묾: 로드 실패) — 체크분만이라도 보존
-      var arts = Object.keys(sm);
-      arts.forEach(function(art){ lines.push([name, label, '', '', art, '', 'O'].map(csvDash).map(csvCell).join(',')); totalArt++; totalChecked++; });
-      if (arts.length) missing++;
-      return;
-    }
-    var curJang = '', curJeol = '';
-    L.rows.forEach(function(r, ri){
-      if (r.kind === 'section'){                       // ## 장/절/관/편 헤딩(부칙·별표 제외)
-        var t = r.text || '';
-        if (/^제\d+절/.test(t) || /^제\d+관/.test(t)) curJeol = t;
-        else { curJang = t; curJeol = ''; }            // 장·편 → 장 갱신, 절 초기화
-        return;
-      }
-      if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
-      if (r.kind !== 'article' || !r.artNo) return;     // 본문 조문만(부칙·별표 항목 제외)
-      var checked = !!sm[r.artNo];                       // 같은 조문번호 2벌(현행+시행예정)도 각각 출력 — dedup 안 함
-      lines.push([name, label, curJang, curJeol, r.text, csvArticleBody(L.rows, ri), checked ? 'O' : 'X'].map(csvDash).map(csvCell).join(','));
-      totalArt++; if (checked) totalChecked++;
-    });
-  });
-  var csv = String.fromCharCode(0xFEFF) + lines.join('\r\n') + '\r\n';   // UTF-8 BOM(엑셀 한글 깨짐 방지) + CRLF
-  try {
-    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = '법률 준거성 평가 기준_' + csvDateStamp() + '_' + csvTimeStamp() + '.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-  } catch (e){ setEbMsg('CSV 생성 실패: ' + ((e && e.message) || e), 'err'); return; }
-  var msg = 'CSV 추출됨 ✓ 전체 ' + totalArt + '개 조문 중 점검대상 ' + totalChecked + '개';
-  if (missing) msg += ' (미로딩 ' + missing + '개 법령은 체크분만 포함)';
-  setEbMsg(msg, 'ok');
-}
-
 // ── 점검대상 CELA 엑셀(.xls) 추출 ─────────────────────────────────────────
-// CSV(exportScopeCsv)와 동일한 데이터(전 법령·전 조문 O/X)를 첼라(CELA) 표준 표
-// 스타일의 HTML 문서로 만들어 .xls 로 내려받는다. Excel/LibreOffice가 인라인 스타일을
-// 읽어 색·테두리·2단 헤더를 그대로 렌더한다(외부 라이브러리 불필요·오프라인·서버 불필요).
-// 스타일 실측값 출처: 첼라템플릿.xlsx 테마 스킴 'CELA'. 본문(전문) 열만 자동 줄바꿈 허용.
-var CELA = { c1:'#EBEFF1', c2:'#D2DBE0', c3:'#ADBEC7', c5:'#597381', c6:'#384048',
-             font:"'맑은 고딕','Malgun Gothic',sans-serif", size:'10pt' };
-// columns[{h,w,g?,body?,status?}] → 연속 동일 group(g)=뎁스1 묶음 + 그룹경계 세로점선 위치
-function celaLayout(cols){
-  var runs = [], i = 0;
-  while (i < cols.length){
-    var g = cols[i].g;
-    if (g){ var j = i; while (j + 1 < cols.length && cols[j + 1].g === g) j++; runs.push({ label:g, start:i, end:j }); i = j + 1; }
-    else i++;
-  }
-  var dl = {}, dr = {};
-  runs.forEach(function(r){ if (r.start > 0) dl[r.start] = true; if (r.end < cols.length - 1) dr[r.end] = true; });  // 표 가장자리는 생략
-  return { runs:runs, hasGroups:runs.length > 0, dl:dl, dr:dr };
-}
-// 역할별 인라인 셀 스타일. mso-number-format:'\@' = 텍스트 서식(조문번호 등 원문 보존).
-function celaStyle(role, ci, L, cols){
-  var s = "font-family:" + CELA.font + ";font-size:" + CELA.size + ";color:#000;text-align:left;vertical-align:middle;mso-number-format:'\\@';";
-  if (role === 'title')  return s + "font-weight:700;border-bottom:1px solid " + CELA.c6 + ";white-space:nowrap;";
-  if (role === 'group')  return s + "font-weight:700;background:" + CELA.c2 + ";border-top:1px solid " + CELA.c3 + ";border-bottom:1px solid " + CELA.c3 + ";white-space:nowrap;";
-  if (role === 'header') s += "font-weight:700;background:" + CELA.c1 + ";border-top:1px solid " + CELA.c3 + ";border-bottom:1px solid " + CELA.c5 + ";white-space:nowrap;";
-  else { s += "border-top:1px solid " + CELA.c3 + ";border-bottom:1px solid " + CELA.c3 + ";";
-         s += (cols[ci] && cols[ci].body) ? "white-space:normal;" : "white-space:nowrap;"; }
-  if (L.dl[ci]) s += "border-left:1px dotted " + CELA.c3 + ";";     // 그룹경계 세로 점선(헤더·본문만)
-  if (L.dr[ci]) s += "border-right:1px dotted " + CELA.c3 + ";";
-  return s;
+// 위 유틸로 모은 전 법령·전 조문 O/X 데이터를 첼라(CELA) 표준 표 스타일의 SpreadsheetML
+// 2003 XML(.xls)로 만들어 내려받는다. Excel/LibreOffice가 서식(얇은 thin 테두리·2단 헤더·
+// 색 채움)을 정확히 렌더한다(외부 라이브러리 0·오프라인·서버 불필요). 스타일 실측값 출처:
+// 첼라템플릿.xlsx 테마 스킴 'CELA'. 본문(전문) 열만 자동 줄바꿈, A열·1행은 여백(내용은 B2부터).
+var CELA = { c1:'#EBEFF1', c2:'#D2DBE0', c3:'#ADBEC7', c5:'#597381', c6:'#384048' };
+function celaXmlEsc(s){ return String(s == null ? '' : s).replace(/[&<>]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]; }); }
+function celaXmlData(s){ return celaXmlEsc(s).replace(/\n/g, '&#10;'); }   // 셀 내 줄바꿈 보존
+// 스타일 레지스트리(중복 제거) — spec → ss:ID. 모든 선은 ss:Weight="1"(thin·가장 얇은 표준).
+function celaStyleReg(){
+  var map = {}, defs = [], n = 0;
+  return {
+    id: function(spec){
+      var key = JSON.stringify(spec);
+      if (map[key]) return map[key];
+      var id = 's' + (n++), x = '<Style ss:ID="' + id + '">';
+      x += '<Alignment ss:Horizontal="' + (spec.align || 'Left') + '" ss:Vertical="Center" ss:WrapText="' + (spec.wrap ? '1' : '0') + '"/>';
+      if (spec.borders && spec.borders.length){
+        x += '<Borders>';
+        spec.borders.forEach(function(b){ x += '<Border ss:Position="' + b.pos + '" ss:LineStyle="' + (b.dot ? 'Dot' : 'Continuous') + '" ss:Weight="1" ss:Color="' + b.color + '"/>'; });
+        x += '</Borders>';
+      }
+      x += '<Font ss:FontName="맑은 고딕" ss:Size="10"' + (spec.bold ? ' ss:Bold="1"' : '') + (spec.color ? ' ss:Color="' + spec.color + '"' : '') + '/>';
+      if (spec.fill) x += '<Interior ss:Color="' + spec.fill + '" ss:Pattern="Solid"/>';
+      x += '<NumberFormat ss:Format="@"/></Style>';
+      map[key] = id; defs.push(x);
+      return id;
+    },
+    xml: function(){ return defs.join(''); }
+  };
 }
 function exportScopeExcel(){
   var scope = state.editMode ? (state.editScope || {}) : (state.scope || {});
@@ -1382,7 +1327,27 @@ function exportScopeExcel(){
     { h:'본문(전문)',    w:64, body:true },
     { h:'점검대상',      w:9,  status:true }
   ];
-  var L = celaLayout(cols);
+  // 그룹 경계 세로 점선: group id가 바뀌는 지점의 '왼쪽 열'에만(단일 소유 → 이중선 방지).
+  var vsep = {};
+  for (var vi = 0; vi < cols.length - 1; vi++){ var ga = cols[vi].g || null, gb = cols[vi + 1].g || null; if (ga !== gb && (ga || gb)) vsep[vi] = true; }
+  var reg = celaStyleReg();
+  // 역할별 스타일. 가로선은 '한 셀만 소유'(본문=아래선만) → 행간 단일 얇은선. 세로 점선은 헤더·본문에만(그룹행 제외).
+  function styleId(role, ci){
+    var vr = vsep[ci] ? [{ pos:'Right', color:CELA.c3, dot:true }] : [];
+    if (role === 'title')  return reg.id({ bold:true, borders:[{ pos:'Bottom', color:CELA.c6 }] });
+    if (role === 'group')  return reg.id({ bold:true, fill:CELA.c2, borders:[{ pos:'Top', color:CELA.c3 }] });   // 그룹행: 세로선 없음
+    if (role === 'gblank') return reg.id({});
+    if (role === 'header') return reg.id({ bold:true, fill:CELA.c1, borders:[{ pos:'Top', color:CELA.c3 }, { pos:'Bottom', color:CELA.c5 }].concat(vr) });
+    if (cols[ci].status)   return reg.id({ align:'Center', borders:[{ pos:'Bottom', color:CELA.c3 }] });          // O/X: 일반 검은색
+    return reg.id({ wrap: !!cols[ci].body, borders:[{ pos:'Bottom', color:CELA.c3 }].concat(vr) });               // 본문: 아래선만
+  }
+  function cell(sid, data, index){
+    var idx = index ? ' ss:Index="' + index + '"' : '';
+    var d = (data == null || data === '') ? '' : '<Data ss:Type="String">' + celaXmlData(data) + '</Data>';
+    return '<Cell' + idx + ' ss:StyleID="' + sid + '">' + d + '</Cell>';
+  }
+
+  // 데이터 수집 (전 법령·전 조문)
   var rows = [], totalArt = 0, totalChecked = 0, missing = 0;
   state.order.forEach(function(id){
     var Lw = state.laws[id]; if (!Lw) return;
@@ -1407,53 +1372,43 @@ function exportScopeExcel(){
     });
   });
 
-  var esc = escapeHtml;
+  // 표 XML 조립 (A열·1행 여백 → 내용은 B2부터. 그룹헤더는 병합 없이 색 채움, 라벨은 시작칸만.)
   var title = '현재 점검대상 — 법률 준거성 평가 기준  [' + csvDateStamp() + ']';
-  var colg = '<colgroup>' + cols.map(function(c){ return '<col style="width:' + ((c.w || 12) * 7) + 'px">'; }).join('') + '</colgroup>';
-  var trs = '';
-  // 제목줄(전폭 밑줄 c6, 텍스트는 첫 칸) + 스페이서
-  trs += '<tr>' + cols.map(function(c, ci){ return '<td style="' + celaStyle('title', ci, L, cols) + '">' + (ci === 0 ? esc(title) : '') + '</td>'; }).join('') + '</tr>';
-  trs += '<tr>' + cols.map(function(){ return '<td style="border:none;font-family:' + CELA.font + ';font-size:6pt;">&nbsp;</td>'; }).join('') + '</tr>';
-  // 그룹헤더(뎁스1) — 병합 없이 색 채움만, 라벨은 시작 칸에만(첼라 규칙)
-  if (L.hasGroups){
-    trs += '<tr>' + cols.map(function(c, ci){
-      var start = null; L.runs.forEach(function(r){ if (r.start === ci) start = r; });
-      var inRun = L.runs.some(function(r){ return ci >= r.start && ci <= r.end; });
-      if (inRun) return '<td style="' + celaStyle('group', ci, L, cols) + '">' + esc(start ? start.label : '') + '</td>';
-      return '<td style="border:none;background:#fff;font-family:' + CELA.font + ';font-size:' + CELA.size + ';"></td>';
-    }).join('') + '</tr>';
-  }
-  // 컬럼헤더(뎁스2)
-  trs += '<tr>' + cols.map(function(c, ci){ return '<td style="' + celaStyle('header', ci, L, cols) + '">' + esc(c.h) + '</td>'; }).join('') + '</tr>';
-  // 본문
-  trs += rows.map(function(rv){
-    return '<tr>' + rv.map(function(val, ci){
+  var colXml = '<Column ss:Width="14"/>';                     // A열 거터
+  cols.forEach(function(c){ colXml += '<Column ss:Width="' + Math.round((c.w || 12) * 5.25) + '"/>'; });
+  var body = '';
+  body += '<Row ss:AutoFitHeight="1"/>';                      // 1행 여백(자동 높이)
+  body += '<Row ss:Height="17">' + cols.map(function(c, ci){ return cell(styleId('title', ci), ci === 0 ? title : '', ci === 0 ? 2 : 0); }).join('') + '</Row>';
+  body += '<Row ss:AutoFitHeight="1"/>';                      // 제목 아래 스페이서(자동 높이)
+  body += '<Row ss:Height="17">' + cols.map(function(c, ci){    // 그룹헤더(뎁스1)
+    var g = c.g || null, prev = ci > 0 ? (cols[ci - 1].g || null) : null;
+    if (g) return cell(styleId('group', ci), (g !== prev ? g : ''), ci === 0 ? 2 : 0);
+    return cell(styleId('gblank', ci), '', ci === 0 ? 2 : 0);
+  }).join('') + '</Row>';
+  body += '<Row ss:Height="17">' + cols.map(function(c, ci){ return cell(styleId('header', ci), c.h, ci === 0 ? 2 : 0); }).join('') + '</Row>';   // 컬럼헤더(뎁스2)
+  body += rows.map(function(rv){                              // 본문(자동 행높이 — 전문 줄바꿈)
+    return '<Row ss:AutoFitHeight="1">' + rv.map(function(val, ci){
       var raw = (val == null ? '' : String(val));
-      if (!cols[ci].body && !cols[ci].status && raw.trim() === '') raw = '-';   // CSV와 동일: 빈 칸 '-'
-      var v = esc(raw);
-      if (cols[ci].body) v = v.replace(/\n/g, '<br>');                          // 전문 줄바꿈 보존(같은 셀)
-      var s = celaStyle('body', ci, L, cols);
-      if (cols[ci].status) s += (raw.trim() === 'O') ? 'color:#1D4ED8;font-weight:700;text-align:center;' : 'color:#94A3B8;text-align:center;';
-      return '<td style="' + s + '">' + (v === '' ? '-' : v) + '</td>';
-    }).join('') + '</tr>';
+      if (!cols[ci].body && !cols[ci].status && raw.trim() === '') raw = '-';
+      return cell(styleId('body', ci), raw, ci === 0 ? 2 : 0);
+    }).join('') + '</Row>';
   }).join('');
 
-  var doc = '﻿<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8">'
-    + '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'
-    + '<x:Name>점검대상</x:Name><x:WorksheetOptions><x:DoNotDisplayGridlines/></x:WorksheetOptions>'
-    + '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'
-    + '<style>br{mso-data-placement:same-cell;} td,th{padding:2px 6px;}</style></head><body>'
-    + '<table style="border-collapse:collapse;table-layout:fixed;">' + colg + trs + '</table></body></html>';
+  var xml = '<?xml version="1.0" encoding="UTF-8"?>\r\n<?mso-application progid="Excel.Sheet"?>\r\n'
+    + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x="urn:schemas-microsoft-com:office:excel">'
+    + '<Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="맑은 고딕" ss:Size="10"/></Style>' + reg.xml() + '</Styles>'
+    + '<Worksheet ss:Name="점검대상"><Table>' + colXml + body + '</Table>'
+    + '<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><DoNotDisplayGridlines/></WorksheetOptions></Worksheet></Workbook>';
 
   try {
-    var blob = new Blob([doc], { type:'application/vnd.ms-excel;charset=utf-8;' });
+    var blob = new Blob([xml], { type:'application/vnd.ms-excel;charset=utf-8;' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = '법률 준거성 평가 기준_CELA_' + csvDateStamp() + '_' + csvTimeStamp() + '.xls';
+    a.href = url; a.download = '법률 준거성 평가 기준_' + csvDateStamp() + '_' + csvTimeStamp() + '.xls';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   } catch (e){ setEbMsg('Excel 생성 실패: ' + ((e && e.message) || e), 'err'); return; }
-  var msg = 'CELA Excel 추출됨 ✓ 전체 ' + totalArt + '개 조문 중 점검대상 ' + totalChecked + '개';
+  var msg = '점검대상 Excel 추출됨 ✓ 전체 ' + totalArt + '개 조문 중 점검대상 ' + totalChecked + '개';
   if (missing) msg += ' (미로딩 ' + missing + '개 법령은 체크분만 포함)';
   setEbMsg(msg, 'ok');
 }
@@ -2892,7 +2847,7 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     autoUpcoming: autoUpcoming, autoUpcomingLines: autoUpcomingLines,
     futureInfo: futureInfo, diffFutureLines: diffFutureLines, diffAddRanges: diffAddRanges,
     setColumns: function(ids){ state.columns = (ids||[]).filter(function(id){ return state.laws[id]; }).map(function(id){ return newColumn(id); }); renderColumns(); renderLawBadges(); saveUiState(); },
-    enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeCsv: exportScopeCsv, exportScopeExcel: exportScopeExcel,
+    enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeExcel: exportScopeExcel,
     editChangeCount: editChangeCount, scopeCellHtml: scopeCellHtml, effScope: effScope, cloneScope: cloneScope,
     CONFIG: CONFIG
   };
