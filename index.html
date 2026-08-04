@@ -396,6 +396,14 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-pop-close:hover{ background:var(--c-badge); color:var(--c-danger); }
 #lawapp-root .lawapp-pop-body{ flex:1 1 auto; min-height:0; max-height:min(50vh,380px); overflow-y:auto; padding:10px 13px 12px; font-size:12.5px; line-height:1.62; color:var(--c-text); word-break:keep-all; overflow-wrap:anywhere; }
 #lawapp-root .lawapp-pop-body .lawapp-row{ margin:0 0 3px; }
+/* 좁은 카드(440px)에선 열 본문 들여쓰기(28~92px)가 과해 한 호가 여러 줄로 깨진다 → 축소 */
+#lawapp-root .lawapp-pop-body .lawapp-row.lawapp-ind1{ padding-left:20px; text-indent:-14px; }
+#lawapp-root .lawapp-pop-body .lawapp-row.lawapp-ind2{ padding-left:32px; text-indent:-14px; }
+#lawapp-root .lawapp-pop-body .lawapp-row.lawapp-ind3{ padding-left:44px; text-indent:-16px; }
+#lawapp-root .lawapp-pop-body .lawapp-row.lawapp-ind4{ padding-left:56px; text-indent:-14px; }
+#lawapp-root .lawapp-pop-body .lawapp-row.lawapp-ind5{ padding-left:68px; text-indent:-16px; }
+/* 팝업이 열린 칩의 hover 툴팁은 숨긴다 — 툴팁 위치(칩 아래)가 팝업과 겹친다 */
+#lawapp-root .lawapp-xlink.lawapp-pen-open[data-tip]:hover::after{ display:none; }
 #lawapp-root .lawapp-pop-foot{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 12px; border-top:1px solid var(--c-border); background:var(--c-bg); }
 #lawapp-root .lawapp-pop-hint{ font-size:10.5px; color:var(--c-sub); }
 #lawapp-root .lawapp-pop-go{ flex:none; padding:4px 9px; border:1px solid var(--c-border-strong); border-radius:7px; background:#fff; font-size:11px; font-weight:700; color:var(--c-text); cursor:pointer; white-space:nowrap; }
@@ -483,7 +491,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 16:31 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 16:43 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -1361,8 +1369,8 @@ function exportScopeExcel(){
     { h:'장',           w:16, g:'조문 위치' },
     { h:'절',           w:14, g:'조문 위치' },
     { h:'조문',         w:16 },
-    { h:'제재(벌칙·과태료)', w:34, body:true },
     { h:'본문(전문)',    w:64, body:true },
+    { h:'제재(벌칙·과태료)', w:34, body:true },
     { h:'점검대상',      w:9,  status:true }
   ];
   // 그룹 경계 세로 점선: group id가 바뀌는 지점의 '왼쪽 열'에만(단일 소유 → 이중선 방지).
@@ -1405,7 +1413,7 @@ function exportScopeExcel(){
       if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
       if (r.kind !== 'article' || !r.artNo) return;
       var checked = !!sm[r.artNo];                            // 같은 조문번호 2벌(현행+시행예정)도 각각 출력
-      rows.push([name, label, curJang, curJeol, r.text, penExcelText(id, r.artNo), csvArticleBody(Lw.rows, ri), checked ? 'O' : 'X']);
+      rows.push([name, label, curJang, curJeol, r.text, csvArticleBody(Lw.rows, ri), penExcelText(id, r.artNo), checked ? 'O' : 'X']);
       totalArt++; if (checked) totalChecked++;
     });
   });
@@ -1427,7 +1435,7 @@ function exportScopeExcel(){
   body += rows.map(function(rv){                              // 본문(자동 행높이 — 전문 줄바꿈)
     return '<Row ss:AutoFitHeight="1">' + rv.map(function(val, ci){
       var raw = (val == null ? '' : String(val));
-      if (!cols[ci].body && !cols[ci].status && raw.trim() === '') raw = '-';
+      if (!cols[ci].status && raw.trim() === '') raw = '-';   // 빈 칸은 '-'(장·절뿐 아니라 본문·제재 열도 동일)
       return cell(styleId('body', ci), raw, ci === 0 ? 2 : 0);
     }).join('') + '</Row>';
   }).join('');
@@ -1521,27 +1529,34 @@ function openPenPop(anchor, lid, art){
   $('#lawapp-pen-pop-body').scrollTop = 0;
   pop.setAttribute('data-law', lid); pop.setAttribute('data-art', art);
   if (si) pop.setAttribute('data-si', si); else pop.removeAttribute('data-si');
+  if (penPopAnchor) penPopAnchor.classList.remove('lawapp-pen-open');
   penPopAnchor = anchor;
+  anchor.classList.add('lawapp-pen-open');   // 이 칩의 hover 툴팁 숨김(팝업과 겹침 방지)
   pop.classList.add('show');          // 먼저 표시해야 크기를 잴 수 있다(display:none이면 0)
   placePenPop();
 }
 function placePenPop(){
   var pop = $('#lawapp-pen-pop');
   if (!pop || !pop.classList.contains('show') || !penPopAnchor) return;
-  if (isMobile()){ pop.style.left = ''; pop.style.top = ''; return; }   // 모바일은 CSS 하단 시트
+  if (isMobile()){ pop.style.left = ''; pop.style.top = ''; pop.style.maxHeight = ''; return; }   // 모바일은 CSS 하단 시트
+  pop.style.maxHeight = '';
   var a = penPopAnchor.getBoundingClientRect();
   var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  // 위·아래 중 여유가 큰 쪽을 고르고, 카드 높이를 그 공간에 맞춰 줄인다.
+  // (양쪽 다 부족할 때 카드가 칩을 덮어버리던 것 방지 — 본문은 카드 안에서 스크롤된다)
+  var below = vh - a.bottom - 14, above = a.top - 14, useBelow = below >= above;
+  pop.style.maxHeight = Math.max(160, useBelow ? below : above) + 'px';
   var pw = pop.offsetWidth, ph = pop.offsetHeight;
   var left = Math.max(8, Math.min(a.left, vw - pw - 8));
-  var top = a.bottom + 6;
-  if (top + ph > vh - 8) top = a.top - ph - 6;                          // 아래 공간 부족 → 위로 뒤집기
+  var top = useBelow ? (a.bottom + 6) : (a.top - ph - 6);
   top = Math.max(8, Math.min(top, vh - ph - 8));                        // 앵커가 화면 밖이어도 팝업은 항상 보이게
   pop.style.left = left + 'px';
   pop.style.top = top + 'px';
 }
 function closePenPop(){
   var pop = $('#lawapp-pen-pop');
-  if (pop && pop.classList.contains('show')){ pop.classList.remove('show'); pop.style.left = ''; pop.style.top = ''; }
+  if (pop && pop.classList.contains('show')){ pop.classList.remove('show'); pop.style.left = ''; pop.style.top = ''; pop.style.maxHeight = ''; }
+  if (penPopAnchor && penPopAnchor.classList) penPopAnchor.classList.remove('lawapp-pen-open');
   penPopAnchor = null;
 }
 function bindPenPop(){
@@ -1555,13 +1570,18 @@ function bindPenPop(){
     closePenPop();
     jumpToArticle(lid, art, si);
   });
-  document.addEventListener('click', function(e){        // 바깥 클릭 닫기(연 클릭 자체는 제외)
+  // 바깥 '누름' 기준으로 닫는다(click이 아니라 pointerdown) — 카드 안에서 시작해 밖에서 끝나는
+  // 드래그 선택(벌칙 문구 복사)이 mouseup 시점에 닫혀버리는 것을 막기 위함. 여는 클릭 자체도 제외.
+  document.addEventListener('pointerdown', function(e){
     if (!pop.classList.contains('show')) return;
-    if (e.target.closest && (e.target.closest('#lawapp-pen-pop') || e.target.closest('.lawapp-xlink[data-pen]'))) return;
+    var t = e.target;
+    if (t && t.closest && (t.closest('#lawapp-pen-pop') || t.closest('.lawapp-xlink[data-pen]'))) return;
     closePenPop();
-  });
+  }, true);
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePenPop(); });
   window.addEventListener('resize', closePenPop);
+  var cols = $('#lawapp-columns');   // 열 가로 스크롤도 앵커를 어긋나게 한다
+  if (cols) cols.addEventListener('scroll', closePenPop, { passive:true });
 }
 
 // 진입 시 검색창에 커서를 둔다. 교차출처 iframe에서는 로드시 자동 포커스가 차단될 수 있어,
