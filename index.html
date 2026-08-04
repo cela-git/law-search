@@ -270,6 +270,8 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-xref + .lawapp-xref{ margin-left:10px; }
 #lawapp-root .lawapp-xref-lead{ color:var(--c-sub); font-weight:700; margin-right:3px; white-space:nowrap; }
 #lawapp-root .lawapp-xref.down .lawapp-xref-lead{ color:var(--c-accent); }
+#lawapp-root .lawapp-xref.pen .lawapp-xref-lead{ color:#b45309; }            /* 제재(벌칙·과태료) — 위임(파랑)과 구분되는 주황 */
+#lawapp-root .lawapp-xref.pen .lawapp-xlink{ color:#b45309; }
 #lawapp-root .lawapp-xref-role{ color:var(--c-sub); font-weight:600; margin-right:1px; }
 #lawapp-root .lawapp-xlink{ display:inline; position:relative; border:0; background:none; padding:0 1px; margin:0; font:inherit; color:var(--c-accent); font-weight:600; cursor:pointer; }
 #lawapp-root .lawapp-xlink:hover{ text-decoration:underline; }
@@ -459,7 +461,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 15:11 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 16:16 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -1324,6 +1326,7 @@ function exportScopeExcel(){
     { h:'장',           w:16, g:'조문 위치' },
     { h:'절',           w:14, g:'조문 위치' },
     { h:'조문',         w:16 },
+    { h:'제재(벌칙·과태료)', w:34, body:true },
     { h:'본문(전문)',    w:64, body:true },
     { h:'점검대상',      w:9,  status:true }
   ];
@@ -1356,7 +1359,7 @@ function exportScopeExcel(){
     var sm = scope[id] || {};
     if (!Lw.loaded || !Lw.rows || !Lw.rows.length){          // 본문 미로딩(드묾) — 체크분만 보존
       var keys = Object.keys(sm);
-      keys.forEach(function(art){ rows.push([name, label, '', '', art, '', 'O']); totalArt++; totalChecked++; });
+      keys.forEach(function(art){ rows.push([name, label, '', '', art, '', '', 'O']); totalArt++; totalChecked++; });
       if (keys.length) missing++;
       return;
     }
@@ -1367,7 +1370,7 @@ function exportScopeExcel(){
       if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
       if (r.kind !== 'article' || !r.artNo) return;
       var checked = !!sm[r.artNo];                            // 같은 조문번호 2벌(현행+시행예정)도 각각 출력
-      rows.push([name, label, curJang, curJeol, r.text, csvArticleBody(Lw.rows, ri), checked ? 'O' : 'X']);
+      rows.push([name, label, curJang, curJeol, r.text, penExcelText(id, r.artNo), csvArticleBody(Lw.rows, ri), checked ? 'O' : 'X']);
       totalArt++; if (checked) totalChecked++;
     });
   });
@@ -1805,9 +1808,177 @@ function parseCites(txt, allowYeong){
   }
   return cites;
 }
+/* ── 제재(벌칙·과태료·과징금) 역참조 ──────────────────────────────────────
+   벌칙 조문 본문의 "제N조제M항을 위반하여 …한 자는 5년 이하의 징역…" 인용을 역색인해,
+   실체 조문 제목 옆에 ⚖ 제재 칩을 붙인다. 본문에 실재하는 인용만 쓰므로 결정론(환각 없음).
+   대상은 본법(법률)뿐 — 시행령의 과태료 부과기준(별표)은 위임 연계(▸)가 이미 담당한다. */
+// 조문 제목 → 제재 유형. gen=false는 제재조로 인식만 하고(역링크 대상에서 제외) 링크는 만들지 않음:
+// 공무원 의제·특례·미수범·양벌·몰수/추징·납부절차는 실체 위반이 아니라 다른 제재조를 인용하기 때문.
+function penKindOf(title){
+  var t = String(title || '');
+  if (!t) return null;
+  if (/의제/.test(t)) return { kind:'의제', gen:false };                       // 벌칙 적용에서 공무원 의제
+  if (/특례/.test(t)) return { kind:'특례', gen:false };                       // 과태료에 관한 규정 적용의 특례
+  if (/미수범/.test(t)) return { kind:'미수', gen:false };
+  if (/양벌규정/.test(t)) return { kind:'양벌', gen:false };
+  if (/몰수|추징/.test(t)) return { kind:'몰수', gen:false };
+  if (/납부기한|분할납부|징수|독촉|환급|가산금/.test(t)) return { kind:'절차', gen:false };
+  if (/벌칙/.test(t)) return { kind:'벌칙', gen:true };
+  if (/과징금/.test(t)) return { kind:'과징금', gen:true };
+  if (/이행강제금/.test(t)) return { kind:'이행강제금', gen:true };
+  if (/과태료/.test(t)) return { kind:'과태료', gen:true };
+  return null;
+}
+// 처벌 수위 문장 발췌 — 형종 키워드가 든 줄을 원문 그대로(요약 실패 시 생략하지 않고 폴백).
+// 자격정지·몰수·추징·"해당 조문의 벌금형"처럼 금액 패턴이 없는 변형도 잡히도록 키워드 기반.
+function penSeverity(text){
+  var t = String(text || '').replace(/^[①-⑳㉑-㉟㊱-㊿]\s*/, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  if (!/(징역|벌금|과태료|과징금|이행강제금|몰수|추징|자격정지|과료)/.test(t)) return '';
+  var m = t.match(/[\s\S]*?(?:처한다|부과한다|과한다|처벌한다|부과할 수 있다)/);
+  var s = (m ? m[0] : t).trim();
+  return (s.length > 110) ? (s.slice(0, 108) + '…') : s;
+}
+// 제재조 본문에서 '자기법' 조문 인용을 추출: [{art:'제79조', hang:1|null, range:{from,to}|null}]
+//  · 「타법명」 뒤로 이어지는 인용 체인(제247조, 제347조 및 제347조의2 …)은 통째로 타법 소속으로 소비
+//  · '부칙 제N조'는 본칙 조문이 아니므로 제외
+//  · '제N조부터 제M조까지'는 범위로 표시(색인 시 실존 조문으로 전개)
+var PEN_CITE_RE = /「[^」]*」|부칙\s*제\d+조(?:의\d+)?|제(\d+)조(?:의(\d+))?부터\s*제(\d+)조(?:의(\d+))?까지|제(\d+)조(?:의(\d+))?(?:제(\d+)항)?/g;
+// 괄호 구간 [시작,끝] 목록 — 괄호 안 인용은 위반 규범이 아니라 적용범위 한정이므로 제외한다.
+function parenSpansOf(s){
+  var spans = [], stack = [], i, ch, st;
+  for (i = 0; i < s.length; i++){
+    ch = s.charAt(i);
+    if (ch === '(' || ch === '（') stack.push(i);
+    else if (ch === ')' || ch === '）'){ st = stack.pop(); if (st != null) spans.push([st, i]); }
+  }
+  return spans;
+}
+function parsePenCites(txt){
+  var s = String(txt || ''), out = [], m, prevEnd = -1, foreign = false;
+  var spans = parenSpansOf(s), hasViol = /(?:을|를)\s*위반/.test(s);
+  PEN_CITE_RE.lastIndex = 0;
+  while ((m = PEN_CITE_RE.exec(s))){
+    var start = m.index, end = PEN_CITE_RE.lastIndex;
+    if (m[0].charAt(0) === '「'){ foreign = true; prevEnd = end; continue; }        // 타법명 → 체인 시작
+    if (m[0].indexOf('부칙') === 0){ foreign = false; prevEnd = end; continue; }
+    if (foreign){
+      // 직전 인용 끝 ~ 현재 시작 사이가 연결어(및·또는·,·ㆍ·부터·까지)나 조문제목 괄호뿐이면 같은 타법 인용
+      var gap = (prevEnd >= 0) ? s.slice(prevEnd, start) : '';
+      if (/^\s*$/.test(gap) || /^\s*(?:,|및|또는|ㆍ|·|부터|까지|내지)\s*$/.test(gap) ||
+          /^\s*\([^()]*\)\s*(?:,|및|또는|ㆍ|·)?\s*$/.test(gap)){ prevEnd = end; continue; }
+      foreign = false;                                                              // 체인 끊김 → 이후는 자기법 후보
+    }
+    // 괄호 안 인용 — "(제26조제8항에 따라 준용되는 경우를 포함한다)"처럼 적용범위·정의 단서일 뿐
+    // 위반 규범이 아니다(위반 규범은 괄호 밖에 적혀 있다).
+    var inParen = false;
+    for (var pi = 0; pi < spans.length; pi++){ if (start > spans[pi][0] && start < spans[pi][1]){ inParen = true; break; } }
+    if (inParen){ prevEnd = end; continue; }
+    var after = s.slice(end, end + 46);
+    if (/^\s*(?:제\d+(?:의\d+)?호)?\s*의?\s*위반\s*여부/.test(after)){ prevEnd = end; continue; }   // "…의 위반 여부를 확인"(판단 기준)
+    if (/^에 따(?:른|라)\s[^,]{0,40}?로서/.test(after)){ prevEnd = end; continue; }                 // "…에 따른 X로서"(수범자 특정)
+    if (hasViol && /^\s*각 호의/.test(after)){ prevEnd = end; continue; }                            // 위반 조문이 따로 있는 줄의 지시적 참조
+    if (m[1]) out.push({ art:null, hang:null, range:{ from:artNumKey('제'+m[1]+'조'+(m[2]?('의'+m[2]):'')), to:artNumKey('제'+m[3]+'조'+(m[4]?('의'+m[4]):'')) } });
+    else out.push({ art:'제'+m[5]+'조'+(m[6]?('의'+m[6]):''), hang:m[7]?(+m[7]):null, range:null });
+    prevEnd = end;
+  }
+  return out;
+}
+var PEN_ORDER = { '벌칙':0, '과징금':1, '이행강제금':2, '과태료':3 };
+// 본법의 제재조를 훑어 pen[법ID][실체조문] = [{penArt,kind,hang,sev,si,verLabel}] 역색인 생성
+function buildPenIndex(){
+  var pen = {};
+  state.order.forEach(function(id){
+    var L = state.laws[id], mm = L.manifestMeta || {};
+    if (mm.type !== '법률' || !L.rows) return;
+    // (a) 이 법의 조문 집합 / 제재조 집합 — 인용 대상 검증용(실존 + 비제재만 링크)
+    var artSet = {}, penSet = {}, artKeys = [];
+    L.rows.forEach(function(r){
+      if (!(r.isHeading && r.kind === 'article' && r.artNo)) return;
+      if (!artSet[r.artNo]){ artSet[r.artNo] = true; artKeys.push(r.artNo); }
+      if (penKindOf(r.artTitle)) penSet[r.artNo] = true;
+    });
+    // (b) 제재조 블록별 스캔 — 현행/시행예정(dual)을 별개 블록으로 분리해 인용 차이를 보존
+    var fi = futureInfo(L), blocks = [], cur = null;
+    L.rows.forEach(function(r){
+      if (r.isHeading && r.kind === 'article' && r.artNo){
+        var pk = penKindOf(r.artTitle), f = fi.rows[r.idx];
+        cur = pk ? { art:r.artNo, title:r.artTitle, kind:pk.kind, gen:pk.gen, si:(f && f.future) ? f.si : null, sev:{}, cites:[], hang:null } : null;
+        if (cur) blocks.push(cur);
+        return;
+      }
+      if (r.isHeading){ cur = null; return; }
+      if (!cur || r.kind !== 'body') return;
+      if (r.indent === 1){
+        cur.hang = circledNum(r.text.charAt(0));                        // 항 추적(과태료는 항별 수위가 다름)
+        // 과징금 '산정 시 고려사항'을 열거하는 항 — 그 안의 인용은 위반 규범이 아니라 참작 요소다.
+        cur.skipHang = /고려하여야|고려한다|참작/.test(r.text);
+      }
+      var hk = (cur.hang == null) ? '_' : cur.hang;
+      if (!cur.sev[hk]){ var sv = penSeverity(r.text); if (sv) cur.sev[hk] = sv; }
+      if (cur.skipHang) return;
+      parsePenCites(r.text).forEach(function(c){ c.penHang = cur.hang; cur.cites.push(c); });
+    });
+    // (c) 인용 → 역색인 (범위 전개 + 실존·비제재 검증)
+    var seen = {};
+    blocks.forEach(function(b){
+      if (!b.gen) return;
+      b.cites.forEach(function(c){
+        var targets = [];
+        if (c.range){ artKeys.forEach(function(a){ var k = artNumKey(a); if (k >= c.range.from && k <= c.range.to) targets.push(a); }); }
+        else targets.push(c.art);
+        targets.forEach(function(a){
+          if (!a || !artSet[a] || penSet[a]) return;                    // 실존 조문 + 제재조가 아닌 것만
+          // 수위 문구: 해당 항 → 항 없는 도입부 → 그 조문의 첫 수위 문구(①항이 명령이고 ②항에 금액이 있는 경우).
+          // 자기 항에서 못 찾아 다른 항 문구를 쓰면 항 표시를 지운다(라벨과 금액이 어긋나 보이지 않도록).
+          var sev = b.sev[(c.penHang == null) ? '_' : c.penHang] || '', dispHang = c.penHang;
+          if (!sev){
+            dispHang = null;
+            sev = b.sev['_'] || '';
+            if (!sev){ var sk = Object.keys(b.sev); if (sk.length) sev = b.sev[sk[0]]; }
+          }
+          // 수위까지 키에 넣는다 — 현행·시행예정이 같은 항 번호라도 금액이 다르면 각각 보존(병합 시 상향분이 가려짐)
+          var key = a + '|' + b.art + '|' + (b.si || '') + '|' + (dispHang == null ? '' : dispHang) + '|' + sev;
+          if (seen[key]) return; seen[key] = true;
+          var pl = pen[id] || (pen[id] = {});
+          (pl[a] || (pl[a] = [])).push({ penArt:b.art, penTitle:b.title, kind:b.kind, hang:dispHang, si:b.si, sev:sev });
+        });
+      });
+    });
+    // (d) dual 정규화: 같은 제재조에 현행·시행예정 두 블록이 있고 인용이 갈릴 때만 버전 라벨
+    var verOf = {};
+    blocks.forEach(function(b){ if (!b.gen) return; var v = verOf[b.art] || (verOf[b.art] = {}); if (b.si) v.fut = b.si; else v.cur = true; });
+    Object.keys(pen[id] || {}).forEach(function(a){
+      var by = {}, order = [];
+      pen[id][a].forEach(function(e){
+        var k = e.penArt + '|' + (e.hang == null ? '' : e.hang) + '|' + e.sev;   // 수위가 다르면 현행/시행예정을 따로 표시
+        if (!by[k]){ by[k] = []; order.push(k); }
+        by[k].push(e);
+      });
+      var out = order.map(function(k){
+        var g = by[k], e = g[0], v = verOf[e.penArt] || {};
+        var hasCur = false, hasFut = false;
+        g.forEach(function(x){ if (x.si) hasFut = true; else hasCur = true; });
+        // 현행·시행예정이 함께 인용하면 라벨 없이 1건, 갈리면 어느 쪽인지 명시.
+        // 시행예정본만 존재하는 제재조(신설)도 '시행예정'으로 표시해 미시행임을 숨기지 않는다.
+        e.verLabel = (hasCur && hasFut) ? '' : (hasFut ? '시행예정' : (v.fut ? '현행' : ''));
+        return e;
+      });
+      out.sort(function(p, q){
+        var px = PEN_ORDER[p.kind], qx = PEN_ORDER[q.kind];
+        if (px !== qx) return px - qx;
+        var pk = artNumKey(p.penArt), qk = artNumKey(q.penArt);
+        if (pk !== qk) return pk - qk;
+        return (p.hang || 0) - (q.hang || 0);
+      });
+      pen[id][a] = out;
+    });
+  });
+  return pen;
+}
 // 전체 색인(모든 법령 로드 완료 후 1회 계산, 캐시) — 줄 단위 부착맵.
 //   rowUp[법ID][행idx]   = [{kind,targetId,art}]  근거(↑): 인용이 처음 나온 그 줄
 //   rowDown[법ID][행idx] = {hang, cands[]}         위임(▸): 위임표현이 든 그 줄(없으면 제목 폴백)
+//   pen[법ID][조문]      = [{penArt,kind,...}]     제재(⚖): 그 조문을 인용하는 벌칙·과태료 조문
 function getXref(){
   if (state._xref) return state._xref;
   if (!(state.order.length && state.order.every(function(id){ return state.laws[id] && state.laws[id].loaded; }))) return null;
@@ -1863,7 +2034,7 @@ function getXref(){
     });
     flush();
   });
-  return (state._xref = { rowUp: rowUp, rowDown: rowDown });
+  return (state._xref = { rowUp: rowUp, rowDown: rowDown, pen: buildPenIndex() });
 }
 // 후보가 위임 줄(dr)을 구현하는가 — 호 줄이면 항·호 정확일치, 항 줄이면 항 일치(호 무관), 번호없는 줄이면 조만 인용
 function matchesDeleg(c, dr){
@@ -1895,8 +2066,8 @@ function xrefRoleLabel(sid){
   if (tm.type === '법률') return '법';
   return tm.short || sid;
 }
-function xlinkBtn(lawId, art, label){
-  var tip = lawDisplay(lawId) + ' ' + art + ' · 클릭하면 해당 조문 열기';
+function xlinkBtn(lawId, art, label, tipExtra){
+  var tip = lawDisplay(lawId) + ' ' + art + (tipExtra ? (' · ' + tipExtra) : '') + ' · 클릭하면 해당 조문 열기';
   return '<button type="button" class="lawapp-xlink" data-law="' + escapeHtml(lawId) + '" data-art="' + escapeHtml(art) + '" data-tip="' + escapeHtml(tip) + '">' + escapeHtml(label) + '</button>';
 }
 var XREF_MAX = 6;   // 한 줄에 표시할 최대 후보 수
@@ -1939,6 +2110,38 @@ function xrefDownRowHtml(L, rowIdx){
   }).join('<span class="sep"> · </span>');
   var more = ranked.length > XREF_MAX ? ('<span class="lawapp-xref-more"> 외 ' + (ranked.length - XREF_MAX) + '건</span>') : '';
   return '<span class="lawapp-xref down"><span class="lawapp-xref-lead">▸ 위임</span>' + parts + more + '</span>';
+}
+// 항 번호 → 원문자(①). 21 이상은 '제N항'으로 표기.
+function hangMark(n){ return (n >= 1 && n <= 20) ? String.fromCharCode(0x2460 + n - 1) : ('제' + n + '항'); }
+// ⚖ 제재(벌칙·과태료·과징금) — 그 조문을 인용하는 제재조를 조문 '제목 행'에 표시(조문 전체에 걸리는 정보).
+function xrefPenRowHtml(L, row){
+  if (!(row.isHeading && row.kind === 'article' && row.artNo)) return '';
+  var x = getXref(); if (!x || !x.pen) return '';
+  var lid = (L.manifestMeta || {}).id;
+  var lst = (x.pen[lid] || {})[row.artNo];
+  if (!lst || !lst.length) return '';
+  var shown = lst.slice(0, XREF_MAX), order = [], byKind = {};
+  shown.forEach(function(e){ if (!byKind[e.kind]){ byKind[e.kind] = []; order.push(e.kind); } byKind[e.kind].push(e); });
+  var parts = order.map(function(k){
+    var links = byKind[k].map(function(e){
+      var label = e.penArt + (e.hang != null ? hangMark(e.hang) : '') + (e.verLabel ? ('[' + e.verLabel + ']') : '');
+      var tip = e.kind + ((e.penTitle && e.penTitle !== e.kind) ? ('(' + e.penTitle + ')') : '') + (e.sev ? (' · ' + e.sev) : '') + (e.si ? (' · [시행 ' + e.si + ']') : '');
+      return xlinkBtn(lid, e.penArt, label, tip);
+    }).join('<span class="sep">·</span>');
+    return '<span class="lawapp-xref-role">' + escapeHtml(k) + '</span> ' + links;
+  }).join('<span class="sep"> · </span>');
+  var more = lst.length > XREF_MAX ? ('<span class="lawapp-xref-more"> 외 ' + (lst.length - XREF_MAX) + '건</span>') : '';
+  return '<span class="lawapp-xref pen"><span class="lawapp-xref-lead">⚖ 제재</span>' + parts + more + '</span>';
+}
+// 엑셀 '제재' 열 값 — 앱 칩과 같은 색인을 재사용(이중 구현 없음). 여러 건은 셀 안 줄바꿈.
+function penExcelText(lawId, artNo){
+  var x = getXref(); if (!x || !x.pen || !artNo) return '';
+  var lst = (x.pen[lawId] || {})[artNo];
+  if (!lst || !lst.length) return '';
+  return lst.map(function(e){
+    return e.kind + ' ' + e.penArt + (e.hang != null ? ('제' + e.hang + '항') : '')
+         + (e.verLabel ? ('[' + e.verLabel + ']') : '') + (e.sev ? (' — ' + e.sev) : '');
+  }).join('\n');
 }
 function scopeBadgeHtml(v){
   if (!v || v.indexOf('c') < 0) return '';
@@ -1999,7 +2202,7 @@ function renderColumnBody(ci){
     if (f && f.future){ futCls = ' lawapp-future'; if (f.heading){ futCls += ' lawapp-future-head'; siAttr = ' data-si="'+escapeHtml(f.si)+'"'; } }
     var scCls = scopeGroups[r.groupKey] ? ' lawapp-sc-c' : '';   // 점검대상 필터용
     var sb = (r.isHeading && r.kind === 'article' && r.artNo) ? scopeCellHtml(col.lawId, r.artNo) : '';
-    var xr = xrefUpRowHtml(L, r.idx) + xrefDownRowHtml(L, r.idx);   // 근거↑·위임▸ — 해당 항/본문 줄에 부착
+    var xr = xrefUpRowHtml(L, r.idx) + xrefDownRowHtml(L, r.idx) + xrefPenRowHtml(L, r);   // 근거↑·위임▸는 본문 줄, 제재⚖는 조문 제목 행
     html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+sb+xr+'</div>';
   }
   body.innerHTML = html;
@@ -2846,6 +3049,7 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     openSummary: openSummary, closeSummary: closeSummary, buildSummaryHtml: buildSummaryHtml, hierRole: hierRole,
     autoUpcoming: autoUpcoming, autoUpcomingLines: autoUpcomingLines,
     futureInfo: futureInfo, diffFutureLines: diffFutureLines, diffAddRanges: diffAddRanges,
+    getXref: getXref, penKindOf: penKindOf, parsePenCites: parsePenCites, penSeverity: penSeverity, penExcelText: penExcelText,
     setColumns: function(ids){ state.columns = (ids||[]).filter(function(id){ return state.laws[id]; }).map(function(id){ return newColumn(id); }); renderColumns(); renderLawBadges(); saveUiState(); },
     enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeExcel: exportScopeExcel,
     editChangeCount: editChangeCount, scopeCellHtml: scopeCellHtml, effScope: effScope, cloneScope: cloneScope,
