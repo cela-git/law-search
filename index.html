@@ -249,6 +249,8 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-edit-bar .lawapp-eb-csv{ width:100%; border-color:var(--c-border-strong); background:#fff; color:var(--c-text); }
 #lawapp-root .lawapp-edit-bar .lawapp-eb-csv:hover{ background:#f8fafc; }
 #lawapp-root .lawapp-edit-bar .lawapp-eb-csv:disabled{ opacity:.5; cursor:default; }
+#lawapp-root .lawapp-edit-bar .lawapp-eb-xlsx{ border-color:#597381; color:#384048; }
+#lawapp-root .lawapp-edit-bar .lawapp-eb-xlsx:hover{ background:#eef2f4; }
 /* 편집 로그인 모달 — 요약 모달과 클래스 충돌 피하려 고유 접두사(emodal) 사용 */
 #lawapp-root .lawapp-emodal{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.42); }
 #lawapp-root .lawapp-emodal.show{ display:flex; }
@@ -433,6 +435,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <div class="lawapp-eb-row"><span class="lawapp-eb-ttl">점검대상 편집 중</span><span class="lawapp-eb-cnt" id="lawapp-eb-cnt">변경 0건</span></div>
     <div class="lawapp-eb-msg" id="lawapp-eb-msg">조문 제목 옆 C를 눌러 추가/제거하세요.</div>
     <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-csv" id="lawapp-eb-csv">현재 점검대상 CSV 추출</button></div>
+    <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-csv lawapp-eb-xlsx" id="lawapp-eb-xlsx">현재 점검대상 Excel 추출 (CELA)</button></div>
     <input type="text" class="lawapp-eb-input" id="lawapp-eb-editor" placeholder="작성자 (필수)" maxlength="60" autocomplete="off" aria-label="작성자">
     <textarea class="lawapp-eb-input" id="lawapp-eb-note" placeholder="메모 (필수 · 커밋에 기록 · 여러 줄 가능)" maxlength="200" rows="2" autocomplete="off" aria-label="메모"></textarea>
     <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-cancel" id="lawapp-eb-cancel">취소</button><button type="button" class="lawapp-eb-save" id="lawapp-eb-save" disabled>저장</button></div>
@@ -457,7 +460,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-03 19:10 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-04 13:01 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -1129,6 +1132,7 @@ function bindEditor(){
   var ebc = $('#lawapp-eb-cancel'); if (ebc) ebc.addEventListener('click', exitEditMode);
   var ebs = $('#lawapp-eb-save'); if (ebs) ebs.addEventListener('click', saveScope);
   var ebcsv = $('#lawapp-eb-csv'); if (ebcsv) ebcsv.addEventListener('click', exportScopeCsv);
+  var ebxlsx = $('#lawapp-eb-xlsx'); if (ebxlsx) ebxlsx.addEventListener('click', exportScopeExcel);
   var ebEditor = $('#lawapp-eb-editor'); if (ebEditor) ebEditor.addEventListener('input', updateEditCount);
   var ebNote = $('#lawapp-eb-note'); if (ebNote) ebNote.addEventListener('input', updateEditCount);
 
@@ -1332,6 +1336,124 @@ function exportScopeCsv(){
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   } catch (e){ setEbMsg('CSV 생성 실패: ' + ((e && e.message) || e), 'err'); return; }
   var msg = 'CSV 추출됨 ✓ 전체 ' + totalArt + '개 조문 중 점검대상 ' + totalChecked + '개';
+  if (missing) msg += ' (미로딩 ' + missing + '개 법령은 체크분만 포함)';
+  setEbMsg(msg, 'ok');
+}
+
+// ── 점검대상 CELA 엑셀(.xls) 추출 ─────────────────────────────────────────
+// CSV(exportScopeCsv)와 동일한 데이터(전 법령·전 조문 O/X)를 첼라(CELA) 표준 표
+// 스타일의 HTML 문서로 만들어 .xls 로 내려받는다. Excel/LibreOffice가 인라인 스타일을
+// 읽어 색·테두리·2단 헤더를 그대로 렌더한다(외부 라이브러리 불필요·오프라인·서버 불필요).
+// 스타일 실측값 출처: 첼라템플릿.xlsx 테마 스킴 'CELA'. 본문(전문) 열만 자동 줄바꿈 허용.
+var CELA = { c1:'#EBEFF1', c2:'#D2DBE0', c3:'#ADBEC7', c5:'#597381', c6:'#384048',
+             font:"'맑은 고딕','Malgun Gothic',sans-serif", size:'10pt' };
+// columns[{h,w,g?,body?,status?}] → 연속 동일 group(g)=뎁스1 묶음 + 그룹경계 세로점선 위치
+function celaLayout(cols){
+  var runs = [], i = 0;
+  while (i < cols.length){
+    var g = cols[i].g;
+    if (g){ var j = i; while (j + 1 < cols.length && cols[j + 1].g === g) j++; runs.push({ label:g, start:i, end:j }); i = j + 1; }
+    else i++;
+  }
+  var dl = {}, dr = {};
+  runs.forEach(function(r){ if (r.start > 0) dl[r.start] = true; if (r.end < cols.length - 1) dr[r.end] = true; });  // 표 가장자리는 생략
+  return { runs:runs, hasGroups:runs.length > 0, dl:dl, dr:dr };
+}
+// 역할별 인라인 셀 스타일. mso-number-format:'\@' = 텍스트 서식(조문번호 등 원문 보존).
+function celaStyle(role, ci, L, cols){
+  var s = "font-family:" + CELA.font + ";font-size:" + CELA.size + ";color:#000;text-align:left;vertical-align:middle;mso-number-format:'\\@';";
+  if (role === 'title')  return s + "font-weight:700;border-bottom:1px solid " + CELA.c6 + ";white-space:nowrap;";
+  if (role === 'group')  return s + "font-weight:700;background:" + CELA.c2 + ";border-top:1px solid " + CELA.c3 + ";border-bottom:1px solid " + CELA.c3 + ";white-space:nowrap;";
+  if (role === 'header') s += "font-weight:700;background:" + CELA.c1 + ";border-top:1px solid " + CELA.c3 + ";border-bottom:1px solid " + CELA.c5 + ";white-space:nowrap;";
+  else { s += "border-top:1px solid " + CELA.c3 + ";border-bottom:1px solid " + CELA.c3 + ";";
+         s += (cols[ci] && cols[ci].body) ? "white-space:normal;" : "white-space:nowrap;"; }
+  if (L.dl[ci]) s += "border-left:1px dotted " + CELA.c3 + ";";     // 그룹경계 세로 점선(헤더·본문만)
+  if (L.dr[ci]) s += "border-right:1px dotted " + CELA.c3 + ";";
+  return s;
+}
+function exportScopeExcel(){
+  var scope = state.editMode ? (state.editScope || {}) : (state.scope || {});
+  var cols = [
+    { h:'법령명',       w:20, g:'법령 정보' },
+    { h:'법령(시행일)',  w:20, g:'법령 정보' },
+    { h:'장',           w:16, g:'조문 위치' },
+    { h:'절',           w:14, g:'조문 위치' },
+    { h:'조문',         w:16 },
+    { h:'본문(전문)',    w:64, body:true },
+    { h:'점검대상',      w:9,  status:true }
+  ];
+  var L = celaLayout(cols);
+  var rows = [], totalArt = 0, totalChecked = 0, missing = 0;
+  state.order.forEach(function(id){
+    var Lw = state.laws[id]; if (!Lw) return;
+    var mm = Lw.manifestMeta || {};
+    var name = mm.short || mm.title || id, label = csvLawLabel(mm, name);
+    var sm = scope[id] || {};
+    if (!Lw.loaded || !Lw.rows || !Lw.rows.length){          // 본문 미로딩(드묾) — 체크분만 보존
+      var keys = Object.keys(sm);
+      keys.forEach(function(art){ rows.push([name, label, '', '', art, '', 'O']); totalArt++; totalChecked++; });
+      if (keys.length) missing++;
+      return;
+    }
+    var curJang = '', curJeol = '';
+    Lw.rows.forEach(function(r, ri){
+      if (r.kind === 'section'){ var t = r.text || '';
+        if (/^제\d+절/.test(t) || /^제\d+관/.test(t)) curJeol = t; else { curJang = t; curJeol = ''; } return; }
+      if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
+      if (r.kind !== 'article' || !r.artNo) return;
+      var checked = !!sm[r.artNo];                            // 같은 조문번호 2벌(현행+시행예정)도 각각 출력
+      rows.push([name, label, curJang, curJeol, r.text, csvArticleBody(Lw.rows, ri), checked ? 'O' : 'X']);
+      totalArt++; if (checked) totalChecked++;
+    });
+  });
+
+  var esc = escapeHtml;
+  var title = '현재 점검대상 — 법률 준거성 평가 기준  [' + csvDateStamp() + ']';
+  var colg = '<colgroup>' + cols.map(function(c){ return '<col style="width:' + ((c.w || 12) * 7) + 'px">'; }).join('') + '</colgroup>';
+  var trs = '';
+  // 제목줄(전폭 밑줄 c6, 텍스트는 첫 칸) + 스페이서
+  trs += '<tr>' + cols.map(function(c, ci){ return '<td style="' + celaStyle('title', ci, L, cols) + '">' + (ci === 0 ? esc(title) : '') + '</td>'; }).join('') + '</tr>';
+  trs += '<tr>' + cols.map(function(){ return '<td style="border:none;font-family:' + CELA.font + ';font-size:6pt;">&nbsp;</td>'; }).join('') + '</tr>';
+  // 그룹헤더(뎁스1) — 병합 없이 색 채움만, 라벨은 시작 칸에만(첼라 규칙)
+  if (L.hasGroups){
+    trs += '<tr>' + cols.map(function(c, ci){
+      var start = null; L.runs.forEach(function(r){ if (r.start === ci) start = r; });
+      var inRun = L.runs.some(function(r){ return ci >= r.start && ci <= r.end; });
+      if (inRun) return '<td style="' + celaStyle('group', ci, L, cols) + '">' + esc(start ? start.label : '') + '</td>';
+      return '<td style="border:none;background:#fff;font-family:' + CELA.font + ';font-size:' + CELA.size + ';"></td>';
+    }).join('') + '</tr>';
+  }
+  // 컬럼헤더(뎁스2)
+  trs += '<tr>' + cols.map(function(c, ci){ return '<td style="' + celaStyle('header', ci, L, cols) + '">' + esc(c.h) + '</td>'; }).join('') + '</tr>';
+  // 본문
+  trs += rows.map(function(rv){
+    return '<tr>' + rv.map(function(val, ci){
+      var raw = (val == null ? '' : String(val));
+      if (!cols[ci].body && !cols[ci].status && raw.trim() === '') raw = '-';   // CSV와 동일: 빈 칸 '-'
+      var v = esc(raw);
+      if (cols[ci].body) v = v.replace(/\n/g, '<br>');                          // 전문 줄바꿈 보존(같은 셀)
+      var s = celaStyle('body', ci, L, cols);
+      if (cols[ci].status) s += (raw.trim() === 'O') ? 'color:#1D4ED8;font-weight:700;text-align:center;' : 'color:#94A3B8;text-align:center;';
+      return '<td style="' + s + '">' + (v === '' ? '-' : v) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+
+  var doc = '﻿<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8">'
+    + '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'
+    + '<x:Name>점검대상</x:Name><x:WorksheetOptions><x:DoNotDisplayGridlines/></x:WorksheetOptions>'
+    + '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'
+    + '<style>br{mso-data-placement:same-cell;} td,th{padding:2px 6px;}</style></head><body>'
+    + '<table style="border-collapse:collapse;table-layout:fixed;">' + colg + trs + '</table></body></html>';
+
+  try {
+    var blob = new Blob([doc], { type:'application/vnd.ms-excel;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = '법률 준거성 평가 기준_CELA_' + csvDateStamp() + '_' + csvTimeStamp() + '.xls';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  } catch (e){ setEbMsg('Excel 생성 실패: ' + ((e && e.message) || e), 'err'); return; }
+  var msg = 'CELA Excel 추출됨 ✓ 전체 ' + totalArt + '개 조문 중 점검대상 ' + totalChecked + '개';
   if (missing) msg += ' (미로딩 ' + missing + '개 법령은 체크분만 포함)';
   setEbMsg(msg, 'ok');
 }
@@ -2770,7 +2892,7 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     autoUpcoming: autoUpcoming, autoUpcomingLines: autoUpcomingLines,
     futureInfo: futureInfo, diffFutureLines: diffFutureLines, diffAddRanges: diffAddRanges,
     setColumns: function(ids){ state.columns = (ids||[]).filter(function(id){ return state.laws[id]; }).map(function(id){ return newColumn(id); }); renderColumns(); renderLawBadges(); saveUiState(); },
-    enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeCsv: exportScopeCsv,
+    enterEditMode: enterEditMode, exitEditMode: exitEditMode, toggleEditScope: toggleEditScope, exportScopeCsv: exportScopeCsv, exportScopeExcel: exportScopeExcel,
     editChangeCount: editChangeCount, scopeCellHtml: scopeCellHtml, effScope: effScope, cloneScope: cloneScope,
     CONFIG: CONFIG
   };
