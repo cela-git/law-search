@@ -348,6 +348,65 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-row.lawapp-future-head::after{ content:'🕒 시행 예정 ' attr(data-si); margin-left:8px; font-size:10.5px; font-weight:700; color:#fff; background:var(--c-future); border-radius:100px; padding:1px 8px; white-space:nowrap; vertical-align:middle; letter-spacing:0; }
 #lawapp-root mark.lawapp-diff{ background:color-mix(in srgb, var(--c-future) 20%, #fff); color:var(--c-future); font-weight:700; border-radius:2px; padding:0 1px; }
 
+/* ── 개정이력 표기 약화 (<개정 …> [전문개정 …] 삭제 <…> 등 3,335건) ─────────────
+   본문보다 한 층 아래로 내린다. 색만이 아니라 크기(0.86em)와 단독 행 들여쓰기(28px)로
+   낮추므로, 검색 하이라이트나 시행예정 강조가 색을 덮어써도 층위가 남는다.
+   박스 속성(배경·테두리)은 쓰지 않는다 — 하이라이트가 표기를 가르면 span이 2~3조각으로
+   나뉘는데, 박스 속성은 조각마다 중복 적용돼 표기 한가운데 빈틈이 생긴다. */
+#lawapp-root{ --c-rev:#94a3b8; --c-rev-on:#475569; }
+#lawapp-root .lawapp-rev{
+  font-size:0.86em; font-weight:400; color:var(--c-rev);
+  letter-spacing:0.01em;            /* 루트의 -0.01em을 되돌려 작은 글자 판독성 확보 */
+  font-variant-numeric:tabular-nums;/* 다중 일자가 세로로 정렬돼 연도 훑기가 쉬워짐 */
+  word-break:keep-all;              /* .lawapp-body의 word-break:normal이 '2012. 2. 17.'을 쪼개는 것 방지 */
+}
+#lawapp-root .lawapp-rev.lawapp-rev-s{ margin-left:0.15em; }  /* 유일한 박스 속성 — 표기의 첫 조각에만 */
+/* 단, 표기가 하이라이트·시행예정 mark 안에 들어간 조각에서는 그 여백이 곧 '배경 구멍'이 된다.
+   mark가 표기 경계에서 둘로 갈리면 두 mark 사이에 이 마진이 끼어 앰버/노랑 띠가 1.9px 끊긴다.
+   원문에 이미 공백 한 칸이 있으므로 여기서만 죽여도 타이포그래피 손실은 없다. */
+#lawapp-root .lawapp-rev.lawapp-rev-s:has(> mark){ margin-left:0; }
+#lawapp-root .lawapp-rev-h,
+#lawapp-root .lawapp-rev-d{ white-space:nowrap; }             /* 여는 꺾쇠+키워드 · 일자를 한 덩어리로 */
+/* 두 톤 — 흰 본문에서는 위 연한 색, 색이 깔린 배경 위에서는 진한 톤으로 자동 보정.
+   --c-rev(#94a3b8)는 흰 배경 전용(2.56:1)이라 노랑(#fef08a·#fde047)·앰버(#fffbeb)·
+   연두(#98FB98) 위에서는 읽히지 않는다. 보정색 #475569는 그 배경들에서 5.75~7.31:1. */
+#lawapp-root .lawapp-rev mark.lawapp-hl{ color:var(--c-rev-on); }
+#lawapp-root .lawapp-row.lawapp-future .lawapp-rev{ color:var(--c-rev-on); }
+/* 검색 결과·목차를 눌러 방금 이동한 행도 법령색 16% 틴트가 깔린다(1.99~2.40:1).
+   사용자가 가장 오래 응시하는 행이므로 같이 보정한다. 아래 예외 규칙들보다 반드시 앞에 둘 것 —
+   뒤에 두면 삭제제목(--c-sub)·별표행(inherit) 예외를 조용히 덮어쓴다. */
+#lawapp-root .lawapp-row.lawapp-target .lawapp-rev{ color:var(--c-rev-on); }
+/* ::selection은 상속되지 않는다. 표기 글자의 대부분이 .lawapp-rev-h/-d 자식 안에 있으므로
+   자손까지 함께 지정해야 드래그 선택 시 연두 배경 위에서 읽힌다. */
+#lawapp-root .lawapp-rev::selection,
+#lawapp-root .lawapp-rev *::selection{ background:var(--c-select); color:var(--c-rev-on); }
+/* 단독 행 표기 945건 — 색보다 강한 신호인 '자리'로 물러나게 한다.
+   28px = 항 ①의 이어지는 줄 기준선과 같은 격자. 아래 6px은 .lawapp-future의 box-shadow가
+   위아래 3px씩 메우는 폭과 정확히 같아 앰버 블록 안에 흰 실선이 생기지 않는다. */
+#lawapp-root .lawapp-row.lawapp-rev-line{ margin:0 0 6px; padding-left:28px; text-indent:0; line-height:1.45; }
+#lawapp-root .lawapp-row.lawapp-rev-line .lawapp-rev{ margin-left:0; }
+/* 헤딩 안의 꼬리 표기 145건 — 원래 굵고 크므로 축소폭을 줄이고 굵기만 낮춘다 */
+#lawapp-root .lawapp-row.lawapp-article .lawapp-rev,
+#lawapp-root .lawapp-row.lawapp-subarticle .lawapp-rev{ font-size:0.88em; font-weight:500; }
+#lawapp-root .lawapp-row.lawapp-section .lawapp-rev,
+#lawapp-root .lawapp-row.lawapp-isms-head .lawapp-rev{ font-size:0.94em; font-weight:500; }
+/* 제목이 '삭제 <일자>'뿐인 조·장 117건 — 그 일자가 조문 내용의 전부라 축소·약화하지 않는다 */
+#lawapp-root .lawapp-row.lawapp-rev-delhead .lawapp-rev{ font-size:1em; font-weight:inherit; color:var(--c-sub); }
+/* 600은 조문 제목(700)에서 '한 단계 낮춘' 값이라 헤딩에서만 준다 — 파서가 kind='body'로 분류한
+   장 표제 줄(PIPA_DECREE '제6장의2 삭제 <2023. 9. 12.>')에 주면 일자가 본문보다 굵어지는 역전이 난다. */
+#lawapp-root .lawapp-row.lawapp-rev-delhead.lawapp-article .lawapp-rev,
+#lawapp-root .lawapp-row.lawapp-rev-delhead.lawapp-section .lawapp-rev{ font-weight:600; }
+/* 이미 회색인 문맥에서는 색을 물려받아 계층 역전을 막는다
+   (별표 항목 행은 행 전체가 --c-sub이라 표기가 오히려 더 진해 보이던 것) */
+#lawapp-root .lawapp-row.lawapp-byeolpyoitem .lawapp-rev{ color:inherit; }
+/* 좌측 결과 발췌(11.5px·--c-sub·2줄 클램프)에서 더 줄이면 9.9px — 미세 타이포는 잡음이라 무효화 */
+#lawapp-root .lawapp-item-ex .lawapp-rev{ font:inherit; color:inherit; letter-spacing:inherit; margin-left:0; }
+/* 제재 팝업 본문(12.5px)에서 0.86em은 10.75px로 과소 — 축소폭만 줄여 층위는 유지 */
+#lawapp-root .lawapp-pop-body .lawapp-rev{ font-size:0.92em; }
+#lawapp-root .lawapp-pop-body .lawapp-row.lawapp-rev-line{ padding-left:20px; margin-bottom:4px; }
+/* 목차의 조문 제목에 붙는 표기 — 목차는 이미 작으므로 색만 물려준다 */
+#lawapp-root .lawapp-toc-t .lawapp-rev{ font-size:0.92em; }
+
 /* 목차 오버레이 */
 #lawapp-root .lawapp-toc{ position:absolute; inset:0; background:rgba(255,255,255,.985); z-index:5; display:none; flex-direction:column; }
 #lawapp-root .lawapp-toc.show{ display:flex; }
@@ -491,7 +550,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-05 15:45 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-05 20:10 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -954,40 +1013,103 @@ function fmtDate(iso){
   if (!m) return iso;
   return m[1]+'. '+(+m[2])+'. '+(+m[3])+'.';
 }
-function buildHighlightHtml(text, ranges, curRange){
-  ranges = mergeRanges(ranges || []);
-  if (!ranges.length) return escapeHtml(text);
-  var html = '', pos = 0;
-  for (var i=0; i<ranges.length; i++){
-    var s = ranges[i][0], e = ranges[i][1];
-    if (s > pos) html += escapeHtml(text.slice(pos, s));
-    var isCur = curRange && s < curRange[1] && e > curRange[0];
-    html += '<mark class="lawapp-hl'+(isCur?' cur':'')+'">' + escapeHtml(text.slice(s, e)) + '</mark>';
-    pos = e;
+/* ── 개정이력 표기 ────────────────────────────────────────────────────────────
+   <개정 2011. 9. 15.> · <신설 …> · [전문개정 …] · [본조신설 …] · [제목개정 …] ·
+   '삭제' 뒤의 <2005. 3. 31.> · [제N조에서 이동 <…>] 계열 = laws/*.md 전체 3,335건.
+   날짜 형식(연·월·일)을 필수로 요구해 다음을 구조적으로 걸러낸다 —
+     · 항 번호 <95>(부칙 '다른 법령의 개정'에서 원문자가 바닥난 뒤의 본문) 143건
+     · 표 셀 줄바꿈 태그 <br> 302건 (tableCellHtml이 먼저 분리하므로 도달하지도 않음)
+     · 부칙 헤딩 공포번호 <법률 제20676호, 2025. 1. 21.> 440건 — 목차 텍스트로도 쓰임
+     · [별표 1]·[별지 제1호서식] 참조 72건, 문장 속 삽입구 13건, 헌재 결정 주석 2건
+     · [시행일: 2027. 1. 21.] 83건 — futureInfo가 시행예정 '강조'에 쓰는 기능 표기라
+       약화 대상이 아니다(앰버 배경 위에 회색을 얹으면 강조와 약화가 충돌). */
+/* 일자 패턴의 꼬리를 '\\s*\\.?'가 아니라 '\\.?'로 둔다 — 꼬리 \s*와 구분자 \s*,\s*의 공백이
+   서로 먹겠다고 겹치면 항목마다 갈래가 2배로 늘어, 매칭이 실패하는 순간(닫는 '>' 누락 등)
+   지수적 백트래킹이 난다. 실측: 겹칠 때 일자 28개 73초 / 안 겹칠 때 0.03ms.
+   나열 개수도 상한을 둔다 — 실측 최대는 18일자(ICN_ACT 제76조 과태료, TELECOM_ACT 제104조)이므로
+   24로 잡아 여유를 둔다. 이중 안전장치. */
+var REV_D  = '\\d{4}\\s*\\.\\s*\\d{1,2}\\s*\\.\\s*\\d{1,2}\\.?';       // 2015.12.23. 처럼 공백 없는 표기 대응
+var REV_DL = REV_D + '(?:\\s*,\\s*' + REV_D + '){0,24}';
+var REV_RE = new RegExp(
+    '<\\s*(?:개정|신설)\\s+' + REV_DL + '\\s*>'
+  + '|\\[\\s*(?:본조신설|전문개정|제목개정)\\s+' + REV_DL + '\\s*\\]'
+  + '|\\[[^\\[\\]<>\\n]{0,90}?(?:이동|삭제)\\s*<\\s*' + REV_D + '\\s*>\\s*\\]'   // 대괄호 안 <일자> 중첩 → 통째로 소비
+  + '|<\\s*' + REV_D + '\\s*>'                                                   // '삭제' 뒤 일자 단독
+  , 'g');
+// 원문 좌표계의 표기 구간 [[s,e],…]. 검색·시행예정 구간과 같은 좌표라 함께 합성할 수 있다.
+function revRanges(text){
+  var out = [], m;
+  REV_RE.lastIndex = 0;
+  while ((m = REV_RE.exec(text)) !== null){
+    out.push([m.index, m.index + m[0].length]);
+    if (m.index === REV_RE.lastIndex) REV_RE.lastIndex++;   // 빈 매칭 무한루프 방지
   }
-  if (pos < text.length) html += escapeHtml(text.slice(pos));
+  return out;
+}
+// 행 전체가 표기 하나뿐인 줄(=[전문개정 …] 단독 행 945건) → 색이 아니라 '자리'로 물러나게 한다
+function isRevOnlyLine(text){
+  var t = String(text == null ? '' : text).trim();
+  if (!t) return false;
+  var r = revRanges(t);
+  return r.length === 1 && r[0][0] === 0 && r[0][1] === t.length;
+}
+// 제목이 '삭제 <일자>'뿐인 조·장 117건 — 그 일자가 조문 내용의 전부라 축소하지 않는다
+function isRevDelHead(text){
+  return /^(?:제\S+(?:\([^)]*\))?\s+)?삭제\s*<[^<>]*>$/.test(String(text == null ? '' : text).trim());
+}
+/* 표기 조각 안에서 '끊기면 안 되는 덩어리'를 묶는다(둘 다 white-space:nowrap).
+   · 여는 꺾쇠+키워드 — 없으면 '<'만 앞 줄에 혼자 남는다
+   · 일자 — .lawapp-body가 word-break:normal이라 '2017. 7.' / '26.>'로 쪼개지던 것
+   조각이 하이라이트로 갈려 패턴이 반쪽만 남으면 그냥 매칭이 안 될 뿐이라 안전하다. */
+function revInner(h, isFirst){
+  if (isFirst) h = h.replace(/^(&lt;\s*(?:개정|신설)|\[\s*(?:본조신설|전문개정|제목개정))(?=\s)/,
+                             '<span class="lawapp-rev-h">$1</span>');
+  return h.replace(/\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?/g,
+                   function(m){ return '<span class="lawapp-rev-d">' + m + '</span>'; });
+}
+/* 한 행을 세 레이어(검색 하이라이트 · 시행예정 변경점 · 개정이력 표기)로 동시에 칠한다.
+   레이어끼리 부분 겹칠 수 있으므로(예: "개정"을 검색하면 하이라이트가 표기 한가운데를 가른다)
+   모든 경계에서 조각을 나눠 <span><mark></span></mark> 같은 태그 교차를 원천 차단한다.
+   표기 스타일은 글자 속성(색·크기·자간)만 쓰므로 조각이 몇 개로 갈려도 시각 결과가 같다 —
+   유일한 박스 속성인 앞 여백만 표기의 첫 조각(.lawapp-rev-s)에 준다. */
+function renderRowHtml(text, hlRanges, curRange, diffRanges){
+  text = String(text == null ? '' : text);
+  var hl = mergeRanges(hlRanges || []), df = mergeRanges(diffRanges || []), rv = revRanges(text);
+  if (!hl.length && !df.length && !rv.length) return escapeHtml(text);
+  var pts = [0, text.length], i;
+  [hl, df, rv].forEach(function(rs){ rs.forEach(function(r){ pts.push(r[0], r[1]); }); });
+  if (curRange) pts.push(curRange[0], curRange[1]);
+  pts = pts.filter(function(p){ return p >= 0 && p <= text.length; })
+           .sort(function(a, b){ return a - b; })
+           .filter(function(p, k, a){ return k === 0 || p !== a[k-1]; });
+  var idxOf = function(rs, s){ for (var j = 0; j < rs.length; j++) if (s >= rs[j][0] && s < rs[j][1]) return j; return -1; };
+  var html = '', prevRev = -1;
+  for (i = 0; i < pts.length - 1; i++){
+    var s = pts[i], e = pts[i+1];
+    if (e <= s) continue;
+    var ri = idxOf(rv, s), isNew = (ri !== -1 && ri !== prevRev);
+    var seg = escapeHtml(text.slice(s, e));
+    if (ri !== -1) seg = revInner(seg, isNew);
+    if (idxOf(df, s) !== -1) seg = '<mark class="lawapp-diff">' + seg + '</mark>';
+    if (idxOf(hl, s) !== -1){
+      var isCur = curRange && s < curRange[1] && e > curRange[0];
+      seg = '<mark class="lawapp-hl' + (isCur ? ' cur' : '') + '">' + seg + '</mark>';
+    }
+    if (ri !== -1) seg = '<span class="lawapp-rev' + (isNew ? ' lawapp-rev-s' : '') + '">' + seg + '</span>';
+    prevRev = ri;
+    html += seg;
+  }
   return html;
 }
+function buildHighlightHtml(text, ranges, curRange){ return renderRowHtml(text, ranges, curRange, null); }
 // 시행예정 조문의 변경 글자 강조 (검색 하이라이트와 다른 색)
-function buildDiffHtml(text, ranges){
-  ranges = mergeRanges(ranges || []);
-  if (!ranges.length) return escapeHtml(text);
-  var html = '', pos = 0;
-  for (var i=0; i<ranges.length; i++){
-    var s = ranges[i][0], e = ranges[i][1];
-    if (s > pos) html += escapeHtml(text.slice(pos, s));
-    html += '<mark class="lawapp-diff">' + escapeHtml(text.slice(s, e)) + '</mark>';
-    pos = e;
-  }
-  if (pos < text.length) html += escapeHtml(text.slice(pos));
-  return html;
-}
+function buildDiffHtml(text, ranges){ return renderRowHtml(text, null, null, ranges); }
 // GFM 표 셀 한 칸: <br> 보존 + 검색어 하이라이트(질의어 토큰 부분일치, 대소문자 무시)
 function tableCellHtml(cell, q){
   var segs = String(cell == null ? '' : cell).split(/<br\s*\/?>/i);
   var toks = (q && q.raw) ? q.raw.toLowerCase().split(/\s+/).filter(Boolean) : [];
   return segs.map(function(seg){
-    if (!toks.length) return escapeHtml(seg);
+    if (!toks.length) return renderRowHtml(seg);
     var low = seg.toLowerCase(), ranges = [];
     toks.forEach(function(t){ var from = 0, k; while ((k = low.indexOf(t, from)) !== -1){ ranges.push([k, k + t.length]); from = k + t.length; } });
     return buildHighlightHtml(seg, mergeRanges(ranges));
@@ -1058,7 +1180,11 @@ function rowBaseHtml(L, idx){
   var f = futureInfo(L).rows[idx];
   if (f && f.ranges) return buildDiffHtml(text, f.ranges);
   if (f && f.whole) return buildDiffHtml(text, [[0, text.length]]);
-  return escapeHtml(text);
+  return renderRowHtml(text);
+}
+// 행 래퍼에 붙일 개정이력 관련 클래스(단독 행 들여쓰기 · 제목이 삭제뿐인 조문 예외)
+function revRowCls(text){
+  return (isRevOnlyLine(text) ? ' lawapp-rev-line' : '') + (isRevDelHead(text) ? ' lawapp-rev-delhead' : '');
 }
 function lawDisplay(id){
   var L = state.laws[id];
@@ -1535,7 +1661,7 @@ function penPopContentHtml(L, startI){
     if (r.isHeading) break;
     if (r.kind === 'table'){ out += '<div class="lawapp-row">' + buildTableHtml(r.table, null) + '</div>'; continue; }
     if (r.kind !== 'body') continue;
-    out += '<div class="lawapp-row lawapp-body' + (r.indent ? (' lawapp-ind' + r.indent) : '') + '">' + rowBaseHtml(L, r.idx) + '</div>';
+    out += '<div class="lawapp-row lawapp-body' + (r.indent ? (' lawapp-ind' + r.indent) : '') + revRowCls(r.text) + '">' + rowBaseHtml(L, r.idx) + '</div>';
   }
   return out || '<div class="lawapp-pop-hint">조문 본문이 없습니다.</div>';
 }
@@ -1548,7 +1674,7 @@ function openPenPop(anchor, lid, art){
   var head = L.rows[i];
   $('#lawapp-pen-pop-kind').textContent = anchor.getAttribute('data-pen') || '제재';
   var sev = anchor.getAttribute('data-sev') || '';
-  $('#lawapp-pen-pop-ttl').innerHTML = escapeHtml(lawDisplay(lid) + ' ' + head.text)
+  $('#lawapp-pen-pop-ttl').innerHTML = escapeHtml(lawDisplay(lid) + ' ') + renderRowHtml(head.text)
     + (si ? ' <span class="lawapp-pop-sev">[시행 ' + escapeHtml(si) + ' — 미시행 개정본]</span>' : '')
     + (sev ? '<span class="lawapp-pop-sev">' + escapeHtml(sev) + '</span>' : '');
   $('#lawapp-pen-pop-body').innerHTML = penPopContentHtml(L, i);
@@ -2377,7 +2503,7 @@ function renderColumnBody(ci){
     var scCls = scopeGroups[r.groupKey] ? ' lawapp-sc-c' : '';   // 점검대상 필터용
     var sb = (r.isHeading && r.kind === 'article' && r.artNo) ? scopeCellHtml(col.lawId, r.artNo) : '';
     var xr = xrefUpRowHtml(L, r.idx) + xrefDownRowHtml(L, r.idx) + xrefPenRowHtml(L, r);   // 근거↑·위임▸는 본문 줄, 제재⚖는 조문 제목 행
-    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+sb+xr+'</div>';
+    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+revRowCls(r.text)+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+sb+xr+'</div>';
   }
   body.innerHTML = html;
 }
@@ -3160,7 +3286,7 @@ function toggleToc(ci, show){
       var v = (t.level === 2 && tocScope && ano) ? tocScope[ano] : null;
       var scCls = v ? ' lawapp-sc-c' : '';
       var it = el('button','lawapp-toc-item lvl'+t.level+scCls);
-      it.innerHTML = '<span class="lawapp-toc-t">'+escapeHtml(t.text)+'</span>' + (v ? scopeBadgeHtml(v) : '');
+      it.innerHTML = '<span class="lawapp-toc-t">'+renderRowHtml(t.text)+'</span>' + (v ? scopeBadgeHtml(v) : '');
       it.addEventListener('click', function(){ toc.classList.remove('show'); touchColumn(ci); requestAnimationFrame(function(){ scrollRowToCenter(ci, t.idx, true); }); });
       tb.appendChild(it);
     });
@@ -3217,6 +3343,7 @@ if (/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname) || location.p
     state: state,
     parseLaw: parseLaw, normalizeWithMap: normalizeWithMap, buildQuery: buildQuery,
     matchRow: matchRow, mergeRanges: mergeRanges, buildHighlightHtml: buildHighlightHtml,
+    revRanges: revRanges, isRevOnlyLine: isRevOnlyLine, isRevDelHead: isRevDelHead, renderRowHtml: renderRowHtml,
     safeHttpUrl: safeHttpUrl, lawSourceUrl: lawSourceUrl,
     computeResults: computeResults, setQuery: setQuery, setSearchMode: setSearchMode, toggleResults: toggleResults,
     openResult: openResult, openLaw: openLaw, toggleLawColumn: toggleLawColumn, closeColumn: closeColumn,
