@@ -258,7 +258,17 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
 #lawapp-root .lawapp-emodal-box h3{ margin:0 0 12px; font-size:14px; color:var(--c-text); }
 #lawapp-root .lawapp-emodal-box input{ width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--c-border-strong); border-radius:8px; font-size:13px; }
 #lawapp-root .lawapp-emodal-err{ margin-top:6px; min-height:14px; font-size:11.5px; color:#dc2626; }
+/* 자동 로그인 동의 — 기본 켜짐이지만 공용 PC 주의를 한 줄로 붙여 스스로 끄게 한다 */
+#lawapp-root .lawapp-emodal-remember{ display:flex; align-items:center; gap:7px; margin-top:10px; font-size:12px; color:var(--c-text); cursor:pointer; }
+#lawapp-root .lawapp-emodal-remember input{ width:14px; height:14px; accent-color:var(--c-accent); flex:none; cursor:pointer; }
+#lawapp-root .lawapp-emodal-remember b{ font-weight:700; }
+#lawapp-root .lawapp-emodal-remember span{ color:var(--c-sub); font-size:11.5px; }
 #lawapp-root .lawapp-emodal-btns{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+/* 편집 바 하단 — 기억을 끊는 유일한 경로라 눈에 띄되 주 동선은 아니게 */
+#lawapp-root .lawapp-eb-forget{ align-self:flex-start; padding:0; border:0; background:none; font:inherit; font-size:11px; color:var(--c-sub); text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+#lawapp-root .lawapp-eb-forget:hover{ color:var(--c-danger); }
+/* 토큰 확인 중인 잠금 버튼 */
+#lawapp-root .lawapp-edit-lock.checking{ opacity:.55; pointer-events:none; }
 #lawapp-root .lawapp-emodal-box button{ padding:7px 14px; border-radius:8px; border:1px solid var(--c-border-strong); background:#fff; font-weight:700; color:var(--c-text); cursor:pointer; }
 #lawapp-root .lawapp-emodal-ok{ border-color:#ea580c; background:#ea580c; color:#fff; }
 #lawapp-root .lawapp-emodal-warn{ margin:16px 0 0; padding:12px 13px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:11px; line-height:1.65; color:#b91c1c; word-break:keep-all; }
@@ -529,12 +539,14 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <input type="text" class="lawapp-eb-input" id="lawapp-eb-editor" placeholder="작성자 (필수)" maxlength="60" autocomplete="off" aria-label="작성자">
     <textarea class="lawapp-eb-input" id="lawapp-eb-note" placeholder="메모 (필수 · 커밋에 기록 · 여러 줄 가능)" maxlength="200" rows="2" autocomplete="off" aria-label="메모"></textarea>
     <div class="lawapp-eb-row"><button type="button" class="lawapp-eb-cancel" id="lawapp-eb-cancel">취소</button><button type="button" class="lawapp-eb-save" id="lawapp-eb-save" disabled>저장</button></div>
+    <button type="button" class="lawapp-eb-forget" id="lawapp-eb-forget" hidden>이 브라우저에서 기억 해제</button>
   </div>
   <div class="lawapp-emodal" id="lawapp-edit-login" aria-hidden="true">
     <div class="lawapp-emodal-box" role="dialog" aria-modal="true" aria-label="편집 권한 확인">
       <h3>편집 권한 확인</h3>
       <input type="password" id="lawapp-edit-pw" placeholder="편집 비밀번호" autocomplete="current-password" aria-label="편집 비밀번호">
       <div class="lawapp-emodal-err" id="lawapp-edit-err"></div>
+      <label class="lawapp-emodal-remember"><input type="checkbox" id="lawapp-edit-remember" checked> 이 브라우저에서 <b>7일간</b> 기억 <span>— 공용 PC에서는 꺼 주세요</span></label>
       <div class="lawapp-emodal-btns"><button type="button" id="lawapp-edit-cancel2">취소</button><button type="button" class="lawapp-emodal-ok" id="lawapp-edit-go">확인</button></div>
       <div class="lawapp-emodal-warn">
         <p class="ew-h">⚠ 경고: 본 시스템은 회사 내부 업무용 시스템으로, 승인된 사용자 외 접근을 금지합니다.</p>
@@ -550,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-05 20:10 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-05 21:14 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -995,6 +1007,7 @@ var state = {
   editMode: false,      // 점검대상 웹 에디터 편집 모드(직원용)
   editScope: null,      // 편집 중 작업본(scope 사본) — 저장 전까지 state.scope 미반영
   editPw: null,         // 편집 비번(메모리에만, 저장 요청용) — 저장소·localStorage엔 안 남김
+  editToken: null,      // 자동 로그인 토큰(서버 서명·7일 만료) — 비번 대신 저장 요청에 쓴다
   _editBaseline: null,  // 편집 진입/저장 시점 스냅샷(JSON) — 변경 건수 계산용
   resultsHidden: false,// 좌측 결과 패널 접힘 여부(사용자 토글)
   resultsWidth: 312,   // 좌측 결과 패널 너비(px, 드래그 조절)
@@ -1320,7 +1333,8 @@ function bindEditor(){
   function openLogin(){ if(err) err.textContent=''; if(pw) pw.value=''; if(login) login.classList.add('show'); setTimeout(function(){ if(pw) pw.focus(); }, 30); }
   function closeLogin(){ if(login) login.classList.remove('show'); }
 
-  if (lock) lock.addEventListener('click', function(){ if (state.editMode) return; openLogin(); });
+  // 기억해 둔 토큰이 있으면 비밀번호 창 없이 바로 편집 모드로
+  if (lock) lock.addEventListener('click', function(){ if (state.editMode) return; tryTokenLogin(openLogin); });
   var c2 = $('#lawapp-edit-cancel2'); if (c2) c2.addEventListener('click', closeLogin);
   var go = $('#lawapp-edit-go'); if (go) go.addEventListener('click', function(){ doLogin(pw, err, closeLogin); });
   if (pw) pw.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(pw, err, closeLogin); });
@@ -1328,6 +1342,11 @@ function bindEditor(){
   var ebc = $('#lawapp-eb-cancel'); if (ebc) ebc.addEventListener('click', exitEditMode);
   var ebs = $('#lawapp-eb-save'); if (ebs) ebs.addEventListener('click', saveScope);
   var ebxlsx = $('#lawapp-eb-xlsx'); if (ebxlsx) ebxlsx.addEventListener('click', exportScopeExcel);
+  var ebf = $('#lawapp-eb-forget');
+  if (ebf) ebf.addEventListener('click', function(){
+    clearEditToken(); state.editToken = null; ebf.hidden = true;
+    setEbMsg('기억을 해제했습니다. 다음부터 비밀번호를 입력합니다.', 'ok');
+  });
   var ebEditor = $('#lawapp-eb-editor'); if (ebEditor) ebEditor.addEventListener('input', updateEditCount);
   var ebNote = $('#lawapp-eb-note'); if (ebNote) ebNote.addEventListener('input', updateEditCount);
 
@@ -1343,17 +1362,69 @@ function bindEditor(){
   });
 }
 
+/* ── 자동 로그인 토큰 ────────────────────────────────────────────────────────
+   비밀번호는 절대 브라우저에 남기지 않는다. 서버가 서명해 준 만료 있는 토큰만 보관한다
+   (형식 v1.<만료ms>.<서명> — 토큰에서 비번을 역산할 수 없고, 서버가 비번을 바꾸면 즉시 무효).
+   저장 위치는 이 앱(iframe) 오리진의 localStorage라 호스트 페이지와 분리돼 있다. */
+function getEditToken(){
+  var e = lsGet().edit;
+  if (!e || !e.token || !e.exp) return null;
+  if (Date.now() >= e.exp){ clearEditToken(); return null; }        // 만료분은 즉시 폐기
+  return e;
+}
+function setEditToken(token, exp){ lsSet({ edit: { token: token, exp: exp } }); }
+function clearEditToken(){ lsSet({ edit: null }); }
+// 남은 기간을 사람이 읽는 문구로 (편집 바에 표시)
+function editTokenLeft(){
+  var e = getEditToken(); if (!e) return '';
+  var d = Math.ceil((e.exp - Date.now()) / 86400000);   // 발급 직후 '7일 남음', 마지막 날 '1일 남음'
+  return d >= 1 ? (d + '일 남음') : '오늘까지';
+}
+
+// 인증 자격 — 비번으로 들어왔으면 비번, 토큰으로 들어왔으면 토큰을 저장 요청에 쓴다
+function editAuthPayload(){
+  if (state.editPw) return { password: state.editPw };
+  if (state.editToken) return { token: state.editToken };
+  return null;
+}
+
 function doLogin(pw, err, closeLogin){
   var val = pw ? pw.value : '';
   if (!val){ if (err) err.textContent = '비밀번호를 입력하세요.'; return; }
+  var rem = $('#lawapp-edit-remember');
+  var remember = !!(rem && rem.checked);
   if (err) err.textContent = '확인 중…';
-  fetch(SCOPE_EDITOR_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'verify', password: val }) })
+  fetch(SCOPE_EDITOR_URL, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'verify', password: val, remember: remember }) })
     .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }, function(){ return { ok:r.ok, j:null }; }); })
     .then(function(res){
-      if (res.ok && res.j && res.j.ok){ state.editPw = val; closeLogin(); enterEditMode(); }
+      if (res.ok && res.j && res.j.ok){
+        state.editPw = val; state.editToken = null;
+        // 토큰은 서버가 줄 때만 저장한다 — 워커가 아직 구버전이면 토큰 없이 그대로 동작(기억만 안 됨)
+        if (remember && res.j.token && res.j.exp) setEditToken(res.j.token, res.j.exp);
+        else if (!remember) clearEditToken();
+        closeLogin(); enterEditMode();
+      }
       else if (err) err.textContent = (res.j && res.j.error === 'unauthorized') ? '비밀번호가 올바르지 않습니다.' : ('실패: ' + ((res.j && res.j.error) || ('HTTP ' + (res.j ? '' : '오류'))));
     })
     .catch(function(){ if (err) err.textContent = '서버에 연결할 수 없습니다.'; });
+}
+
+// 저장된 토큰으로 조용히 잠금 해제 시도. 실패(만료·비번 변경·워커 미갱신)하면 토큰을 버리고
+// 평소대로 비밀번호 창을 연다 — 사용자는 '기억이 풀렸구나' 정도만 느낀다.
+function tryTokenLogin(onFail){
+  var e = getEditToken();
+  if (!e){ onFail(); return; }
+  var lock = $('#lawapp-edit-lock'); if (lock) lock.classList.add('checking');
+  fetch(SCOPE_EDITOR_URL, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'verify', token: e.token }) })
+    .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }, function(){ return { ok:r.ok, j:null }; }); })
+    .then(function(res){
+      if (lock) lock.classList.remove('checking');
+      if (res.ok && res.j && res.j.ok){ state.editPw = null; state.editToken = e.token; enterEditMode(); }
+      else { clearEditToken(); onFail(); }
+    })
+    .catch(function(){ if (lock) lock.classList.remove('checking'); onFail(); });   // 오프라인이면 토큰은 남겨 둔다
 }
 
 // scope 객체 깊은 사본(2단계: lawId → {조번호: 'c'})
@@ -1371,12 +1442,15 @@ function enterEditMode(){
   if (state.scopeC){ state.scopeC = false; var bc = $('#lawapp-filter-c'); if (bc) bc.setAttribute('aria-pressed','false'); var root = document.getElementById('lawapp-root'); if (root) root.classList.remove('lawapp-fc'); }
   var lock = $('#lawapp-edit-lock'); if (lock){ lock.classList.add('editing'); lock.innerHTML = UNLOCK_ICON; lock.setAttribute('data-tip', '편집 모드 (우하단에서 저장/취소)'); }
   var bar = $('#lawapp-edit-bar'); if (bar) bar.classList.add('show');
+  var ebf = $('#lawapp-eb-forget');
+  if (ebf){ var left = editTokenLeft(); ebf.hidden = !left; if (left) ebf.textContent = '이 브라우저에서 기억 해제 (' + left + ')'; }
   setEbMsg('조문 제목 옆 C를 눌러 추가/제거하세요.', '');
   updateEditCount();
   rerenderOpenColumns();
 }
 
 function exitEditMode(){
+  // 토큰(state.editToken)은 지우지 않는다 — '기억'의 핵심. 해제는 '기억 해제' 버튼으로만.
   state.editMode = false; state.editScope = null; state.editPw = null; state._editBaseline = null;
   var lock = $('#lawapp-edit-lock'); if (lock){ lock.classList.remove('editing'); lock.innerHTML = LOCK_ICON; lock.setAttribute('data-tip', '점검대상 편집(첼라 구성원)'); }
   var bar = $('#lawapp-edit-bar'); if (bar) bar.classList.remove('show');
@@ -1424,7 +1498,7 @@ function updateEditCount(){
 function setEbMsg(txt, cls){ var m = $('#lawapp-eb-msg'); if (!m) return; m.textContent = txt || ''; m.className = 'lawapp-eb-msg' + (cls ? (' ' + cls) : ''); }
 
 function saveScope(){
-  if (!state.editMode || !state.editPw) return;
+  if (!state.editMode || !editAuthPayload()) return;
   var n = editChangeCount();
   if (!n){ setEbMsg('변경된 내용이 없습니다.', ''); return; }
   var editor = (($('#lawapp-eb-editor') || {}).value || '').trim();
@@ -1432,7 +1506,8 @@ function saveScope(){
   if (!editor || !note){ setEbMsg('작성자와 메모를 모두 입력해야 저장됩니다.', 'err'); return; }
   var sv = $('#lawapp-eb-save'); if (sv) sv.disabled = true;
   setEbMsg('저장 중…', '');
-  var payload = { action:'save', password: state.editPw, scope: state.editScope, editor: editor, note: note, count: n };
+  var payload = { action:'save', scope: state.editScope, editor: editor, note: note, count: n };
+  var auth = editAuthPayload(); for (var ak in auth) payload[ak] = auth[ak];   // password 또는 token
   fetch(SCOPE_EDITOR_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
     .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }, function(){ return { ok:r.ok, j:null }; }); })
     .then(function(res){
@@ -1447,6 +1522,8 @@ function saveScope(){
         setTimeout(hideBanner, 6000);
       } else {
         var e = (res.j && res.j.error) || '알 수 없는 오류';
+        // 토큰으로 저장하다 권한이 끊기면(만료·비번 변경) 기억을 버려 다음엔 비번을 묻게 한다
+        if (e === 'unauthorized' && state.editToken){ clearEditToken(); state.editToken = null; }
         setEbMsg('저장 실패: ' + (e === 'unauthorized' ? '권한 만료 — 취소 후 다시 잠금 해제' : e), 'err');
         if (sv) sv.disabled = false;
       }

@@ -19,10 +19,20 @@
  *   GH_OWNER, GH_REPO, GH_BRANCH, GH_PATH, ALLOW_ORIGIN
  *
  * 요청 형식(POST JSON):
- *   { "action": "verify", "password": "..." }                 → { ok: true }
- *   { "action": "save",   "password": "...", "scope": {...},
+ *   { "action": "verify", "password": "...", "remember": true }
+ *                                                            → { ok: true, token, exp }
+ *   { "action": "verify", "token": "..." }                    → { ok: true }
+ *   { "action": "save",   "password"|"token": "...", "scope": {...},
  *     "message": "선택: 커밋 메시지" }                          → { ok: true, commit: "<sha>" }
  *   scope 형식: { "법령ID": { "제5조": "c", ... }, ... }  (값은 항상 "c")
+ *
+ * 자동 로그인 토큰 — 매번 비번을 넣는 불편을 줄이되 비번 자체는 브라우저에 남기지 않는다.
+ *   형식: "v1.<만료시각ms>.<HMAC-SHA256(EDIT_PASSWORD, 'v1.<만료시각ms>')>"
+ *   · 서버에 아무것도 저장하지 않는다(DB 없음 유지) — 서명만으로 위조를 막는다.
+ *   · 토큰에서 비밀번호를 역산할 수 없다.
+ *   · 재발급은 '비밀번호로 인증했을 때'만 한다. 토큰으로 토큰을 갱신하면 유출된 토큰이
+ *     무한 연장되므로 금지 — 7일이 지나면 반드시 비번을 다시 넣어야 한다.
+ *   · EDIT_PASSWORD를 바꾸면 발급된 토큰이 전부 즉시 무효가 된다(사고 시 회수 경로).
  */
 
 export default {
@@ -40,18 +50,31 @@ export default {
     try { body = await request.json(); }
     catch { return json({ error: 'bad_json' }, 400, cors); }
 
-    const { action, password } = body || {};
+    const { action, password, token } = body || {};
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
     const ua = (request.headers.get('User-Agent') || '').slice(0, 120);
 
-    // 비밀번호 검증(상수시간 비교). 모든 시도를 IP와 함께 로그에 남긴다(부정 접근 억제·추적).
-    if (typeof password !== 'string' || !(await safeEqual(password, env.EDIT_PASSWORD))) {
-      console.log('[scope-editor] DENY ' + JSON.stringify({ action, ip, ua }));
+    // 인증: 비밀번호(상수시간 비교) 또는 유효한 자동 로그인 토큰.
+    // 모든 시도를 IP와 함께 로그에 남긴다(부정 접근 억제·추적).
+    let via = null;
+    if (typeof password === 'string' && (await safeEqual(password, env.EDIT_PASSWORD))) via = 'password';
+    else if (await checkToken(env, token)) via = 'token';
+    if (!via) {
+      console.log('[scope-editor] DENY ' + JSON.stringify({ action, ip, ua, tried: typeof token === 'string' ? 'token' : 'password' }));
       return json({ error: 'unauthorized' }, 401, cors);
     }
-    console.log('[scope-editor] AUTH-OK ' + JSON.stringify({ action, ip }));
+    console.log('[scope-editor] AUTH-OK ' + JSON.stringify({ action, ip, via }));
 
-    if (action === 'verify') return json({ ok: true }, 200, cors);
+    if (action === 'verify') {
+      const out = { ok: true, via };
+      // 토큰 발급은 비밀번호로 인증했을 때만 (토큰 무한 연장 차단)
+      if (body.remember === true && via === 'password') {
+        const exp = Date.now() + TOKEN_TTL_MS;
+        out.token = await issueToken(env, exp);
+        out.exp = exp;
+      }
+      return json(out, 200, cors);
+    }
 
     if (action === 'save') {
       const err = validateScope(body.scope);
@@ -95,6 +118,34 @@ function json(obj, status, extra) {
     status,
     headers: Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, extra || {}),
   });
+}
+
+// ── 자동 로그인 토큰 ───────────────────────────────────────────────
+const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;   // 7일
+
+async function hmacB64url(key, msg) {
+  const enc = new TextEncoder();
+  const k = await crypto.subtle.importKey('raw', enc.encode(String(key)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(String(msg))));
+  let bin = '';
+  for (let i = 0; i < sig.length; i++) bin += String.fromCharCode(sig[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// "v1.<exp>.<sig>" — 서버 저장 없음. 서명 키는 EDIT_PASSWORD 자체라 비번 변경 = 전량 무효화.
+async function issueToken(env, exp) {
+  const head = 'v1.' + exp;
+  return head + '.' + (await hmacB64url(env.EDIT_PASSWORD, head));
+}
+
+async function checkToken(env, token) {
+  if (typeof token !== 'string') return false;
+  const m = token.match(/^(v1\.(\d{13,16}))\.([A-Za-z0-9_-]{20,64})$/);
+  if (!m) return false;
+  const exp = Number(m[2]);
+  if (!Number.isFinite(exp) || exp <= Date.now()) return false;      // 만료
+  if (exp > Date.now() + TOKEN_TTL_MS + 60000) return false;         // 미래로 조작된 만료시각 차단
+  return await safeEqual(m[3], await hmacB64url(env.EDIT_PASSWORD, m[1]));
 }
 
 // SHA-256 해시 비교(타이밍 누수 최소화)
@@ -191,5 +242,5 @@ async function commitScope(env, scope, meta) {
 }
 
 // 단위 테스트용 내보내기(Cloudflare는 default export만 사용 — 무해)
-export { validateScope, toBase64, safeEqual, pickOrigin };
+export { validateScope, toBase64, safeEqual, pickOrigin, issueToken, checkToken, hmacB64url, TOKEN_TTL_MS };
 
