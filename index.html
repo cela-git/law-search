@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-06 20:12 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 11:10 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -2586,6 +2586,14 @@ function scopeCellHtml(lawId, artNo){
   return scopeBadgeHtml(m ? m[artNo] : null);
 }
 
+// 행 본문 뒤에 붙는 부속물 — 점검대상 배지·C 버튼, 근거↑·위임▸·제재⚖ 칩.
+// 검색 하이라이트가 켜지고 꺼질 때 행 innerHTML을 통째로 다시 쓰므로, 본문만 다시 쓰면
+// 이 부속물이 사라진다. 세 자리(최초 렌더·하이라이트 적용·해제)가 같은 함수를 쓰게 묶는다.
+function rowSuffixHtml(L, lawId, r){
+  var sb = (r.isHeading && r.kind === 'article' && r.artNo) ? scopeCellHtml(lawId, r.artNo) : '';
+  return sb + xrefUpRowHtml(L, r.idx) + xrefDownRowHtml(L, r.idx) + xrefPenRowHtml(L, r);
+}
+
 function renderColumnBody(ci){
   var body = document.querySelector('.lawapp-col-body[data-col="'+ci+'"]');
   if (!body) return;
@@ -2629,9 +2637,7 @@ function renderColumnBody(ci){
     var f = fi.rows[r.idx], futCls = '', siAttr = '';
     if (f && f.future){ futCls = ' lawapp-future'; if (f.heading){ futCls += ' lawapp-future-head'; siAttr = ' data-si="'+escapeHtml(f.si)+'"'; } }
     var scCls = scopeGroups[r.groupKey] ? ' lawapp-sc-c' : '';   // 점검대상 필터용
-    var sb = (r.isHeading && r.kind === 'article' && r.artNo) ? scopeCellHtml(col.lawId, r.artNo) : '';
-    var xr = xrefUpRowHtml(L, r.idx) + xrefDownRowHtml(L, r.idx) + xrefPenRowHtml(L, r);   // 근거↑·위임▸는 본문 줄, 제재⚖는 조문 제목 행
-    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+revRowCls(r.text)+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+sb+xr+'</div>';
+    html += '<div class="lawapp-row lawapp-'+r.kind+indCls+futCls+scCls+revRowCls(r.text)+'" data-line="'+r.idx+'"'+(r.isHeading?(' data-art="'+escapeHtml(r.artNo||r.text)+'"'):'')+siAttr+'>'+rowBaseHtml(L, r.idx)+rowSuffixHtml(L, col.lawId, r)+'</div>';
   }
   body.innerHTML = html;
 }
@@ -3296,7 +3302,7 @@ function applyColumnHighlights(ci){
   Array.prototype.forEach.call(body.querySelectorAll('.lawapp-row.lawapp-hled'), function(rowEl){
     var idx = +rowEl.getAttribute('data-line');
     var L0 = state.laws[col.lawId];
-    if (L0 && L0.rows[idx]) rowEl.innerHTML = rowBaseHtml(L0, idx);
+    if (L0 && L0.rows[idx]) rowEl.innerHTML = rowBaseHtml(L0, idx) + rowSuffixHtml(L0, col.lawId, L0.rows[idx]);
     rowEl.classList.remove('lawapp-hled');
   });
   if (!col.lawId || !state.query.phraseNorm || !col.rowRanges) return;
@@ -3308,8 +3314,11 @@ function applyColumnHighlights(ci){
     var rowEl = body.querySelector('.lawapp-row[data-line="'+idx+'"]');
     if (!rowEl) return;
     var curRange = (cur && cur.idx === idx) ? cur.range : null;
-    if (L.rows[idx].kind === 'table') rowEl.innerHTML = buildTableHtml(L.rows[idx].table, state.query);   // 표는 셀 단위 강조
-    else rowEl.innerHTML = buildHighlightHtml(L.rows[idx].text, col.rowRanges[idx], curRange);
+    var rw = L.rows[idx];
+    var inner = (rw.kind === 'table')                                                      // 표는 셀 단위 강조
+      ? buildTableHtml(rw.table, state.query)
+      : buildHighlightHtml(rw.text, col.rowRanges[idx], curRange);
+    rowEl.innerHTML = inner + rowSuffixHtml(L, col.lawId, rw);
     rowEl.classList.add('lawapp-hled');
   });
 }
