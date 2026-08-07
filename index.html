@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 18:02 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 18:14 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -1648,7 +1648,7 @@ function exportScopeExcel(){
     { h:'법령(시행일)',  w:20, g:'법령 정보' },
     { h:'장',           w:16, g:'조문 위치' },
     { h:'절',           w:14, g:'조문 위치' },
-    { h:'조문',         w:16 },
+    { h:'조문',         w:20 },
     { h:'본문(전문)',    w:64, body:true },
     { h:'제재(벌칙·과태료)', w:34, body:true },
     { h:'점검대상',      w:9,  status:true }
@@ -1664,7 +1664,7 @@ function exportScopeExcel(){
     if (role === 'group')  return reg.id({ bold:true, fill:CELA.c2, borders:[{ pos:'Top', color:CELA.c3 }] });   // 그룹행: 세로선 없음
     if (role === 'gblank') return reg.id({});
     if (role === 'header') return reg.id({ bold:true, fill:CELA.c1, borders:[{ pos:'Top', color:CELA.c3 }, { pos:'Bottom', color:CELA.c5 }].concat(vr) });
-    if (cols[ci].status)   return reg.id({ align:'Center', valign:'Top', borders:[{ pos:'Bottom', color:CELA.c3 }] });   // O/X: 일반 검은색, 세로 위
+    if (cols[ci].status)   return reg.id({ valign:'Top', borders:[{ pos:'Bottom', color:CELA.c3 }] });   // O/-: 일반 검은색, 헤더와 같은 왼쪽 맞춤·세로 위
     return reg.id({ valign:'Top', wrap: !!cols[ci].body, borders:[{ pos:'Bottom', color:CELA.c3 }].concat(vr) });        // 본문(6행~): 아래선만, 세로 위 정렬
   }
   function cell(sid, data, index){
