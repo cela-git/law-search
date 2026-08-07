@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 13:52 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 18:02 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -1686,14 +1686,17 @@ function exportScopeExcel(){
       if (keys.length) missing++;
       return;
     }
-    var curJang = '', curJeol = '';
+    var curJang = '', curJeol = '', fi = futureInfo(Lw);
     Lw.rows.forEach(function(r, ri){
       if (r.kind === 'section'){ var t = r.text || '';
         if (/^제\d+절/.test(t) || /^제\d+관/.test(t)) curJeol = t; else { curJang = t; curJeol = ''; } return; }
       if (r.kind === 'supheading' || r.kind === 'byeolpyo-heading'){ curJang = ''; curJeol = ''; return; }
       if (r.kind !== 'article' || !r.artNo) return;
       var checked = !!sm[r.artNo];                            // 같은 조문번호 2벌(현행+시행예정)도 각각 출력
-      rows.push([name, label, curJang, curJeol, r.text, csvArticleBody(Lw.rows, ri), penExcelText(id, r.artNo), checked ? 'O' : 'X']);
+      // 2벌은 조문번호·제목이 똑같아 엑셀에서 구분이 안 된다 → 시행예정 벌에만 시행일을 덧붙인다
+      var fr = fi.rows[r.idx];
+      var art = r.text + ((fr && fr.future && fr.si) ? ' [시행일: ' + fr.si + '] ' + r.artNo : '');
+      rows.push([name, label, curJang, curJeol, art, csvArticleBody(Lw.rows, ri), penExcelText(id, r.artNo), checked ? 'O' : '-']);
       totalArt++; if (checked) totalChecked++;
     });
   });
