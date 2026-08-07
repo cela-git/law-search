@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 11:10 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-07 13:52 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -2586,6 +2586,22 @@ function scopeCellHtml(lawId, artNo){
   return scopeBadgeHtml(m ? m[artNo] : null);
 }
 
+// 점검대상(C) 조문이 속한 group 집합 : 본문 ### 조문만(부칙 #### 제외).
+// C 필터를 켜면 CSS가 이 group의 행만 남기고 나머지를 감춘다. 본문 렌더와 검색 이동
+// (computeColumnMatches)이 반드시 같은 기준을 써야 한다 — 어긋나면 숨은 행까지 세어
+// '14/430' 같은 헛count가 나오고 찾기 버튼이 안 보이는 행으로 간다.
+function scopeGroupKeys(lawId){
+  var out = {};
+  var map = state.scope && state.scope[lawId];
+  var L = lawId && state.laws[lawId];
+  if (!map || !L || !L.loaded) return out;                  // 대상 없음 = 필터 켜면 전부 숨김
+  for (var i = 0; i < L.rows.length; i++){
+    var r = L.rows[i];
+    if (r.isHeading && r.kind === 'article' && r.artNo && map[r.artNo]) out[r.groupKey] = true;
+  }
+  return out;
+}
+
 // 행 본문 뒤에 붙는 부속물 — 점검대상 배지·C 버튼, 근거↑·위임▸·제재⚖ 칩.
 // 검색 하이라이트가 켜지고 꺼질 때 행 innerHTML을 통째로 다시 쓰므로, 본문만 다시 쓰면
 // 이 부속물이 사라진다. 세 자리(최초 렌더·하이라이트 적용·해제)가 같은 함수를 쓰게 묶는다.
@@ -2613,15 +2629,7 @@ function renderColumnBody(ci){
   if (!L.loaded){ body.innerHTML='<div class="lawapp-col-loading">법령을 불러오는 중…</div>'; return; }
 
   var fi = futureInfo(L);
-  // 점검대상(scope) 조문이 속한 group : 본문 ### 조문만(부칙 #### 제외)
-  var scopeMap = (state.scope && state.scope[col.lawId]) || null;
-  var scopeGroups = {};
-  if (scopeMap){
-    for (var si2=0; si2<L.rows.length; si2++){
-      var rh = L.rows[si2];
-      if (rh.isHeading && rh.kind === 'article' && rh.artNo && scopeMap[rh.artNo]) scopeGroups[rh.groupKey] = true;
-    }
-  }
+  var scopeGroups = scopeGroupKeys(col.lawId);
   var isIsms = !!(L.manifestMeta && L.manifestMeta.type === '인증기준');   // ISMS-P 전용 들여쓰기
   var html = '';
   for (var i=0; i<L.rows.length; i++){
@@ -3254,19 +3262,27 @@ function bindSummary(){
 // col.matchPos: [{idx, range}] 문서 순서. col.rowRanges: idx→ranges (하이라이트 재사용으로 matchRow 중복 호출 제거).
 function computeColumnMatches(ci){
   var col = state.columns[ci];
+  var wasIdx = (col.curMatch >= 0 && col.matchPos[col.curMatch]) ? col.matchPos[col.curMatch].idx : null;
   col.matchPos = []; col.rowRanges = {};
   if (!col.lawId || !state.query.phraseNorm){ col.curMatch = -1; return; }
   var L = state.laws[col.lawId];
   if (!L || !L.loaded){ col.curMatch = -1; return; }
+  // C 필터가 켜져 있으면 화면에서 감춰진 행은 세지도, 찾기로 이동하지도 않는다
+  var vis = state.scopeC ? scopeGroupKeys(col.lawId) : null;
   for (var i=0; i<L.rows.length; i++){
+    if (vis && !vis[L.rows[i].groupKey]) continue;
     var m = matchRow(L.rows[i], state.query, state.searchMode);
     if (!m.match) continue;
     var idx = L.rows[i].idx;
     col.rowRanges[idx] = m.ranges;
     for (var r=0; r<m.ranges.length; r++) col.matchPos.push({ idx: idx, range: m.ranges[r] });
   }
-  if (col.matchPos.length){ if (col.curMatch < 0 || col.curMatch >= col.matchPos.length) col.curMatch = 0; }
-  else col.curMatch = -1;
+  if (!col.matchPos.length){ col.curMatch = -1; return; }
+  // 필터를 켜고 끄면 순번이 통째로 밀린다 — 보던 행이 남아 있으면 그 자리를 지킨다
+  var keep = -1;
+  if (wasIdx != null){ for (var k=0; k<col.matchPos.length; k++){ if (col.matchPos[k].idx === wasIdx){ keep = k; break; } } }
+  if (keep >= 0) col.curMatch = keep;
+  else if (col.curMatch < 0 || col.curMatch >= col.matchPos.length) col.curMatch = 0;
 }
 
 function refreshColumnMatchNav(ci){
@@ -3355,6 +3371,8 @@ function scrollRowToCenter(ci, lineIdx, pulse){
   if (!body) return;
   var rowEl = body.querySelector('.lawapp-row[data-line="'+lineIdx+'"]');
   if (!rowEl) return;
+  // C 필터로 감춰진 행(display:none)은 좌표가 전부 0이라, 그대로 계산하면 엉뚱한 곳으로 튄다
+  if (!rowEl.getClientRects().length) return;
   var cRect = body.getBoundingClientRect();
   var rRect = rowEl.getBoundingClientRect();
   var delta = (rRect.top - cRect.top) - (body.clientHeight/2 - rRect.height/2);
