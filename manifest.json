@@ -134,54 +134,6 @@
       "order": 42
     },
     {
-      "id": "EFT_ACT",
-      "file": "laws/EFT_ACT.md",
-      "title": "전자금융거래법",
-      "short": "전자금융거래법",
-      "type": "법률",
-      "category": "전자금융",
-      "no": "법률 제21205호",
-      "enforced": "2025-12-16",
-      "version": "20251216",
-      "order": 50
-    },
-    {
-      "id": "EFT_DECREE",
-      "file": "laws/EFT_DECREE.md",
-      "title": "전자금융거래법 시행령",
-      "short": "전자금융거래법 시행령",
-      "type": "대통령령",
-      "category": "전자금융",
-      "no": "대통령령 제36281호",
-      "enforced": "2026-04-28",
-      "version": "20260428",
-      "order": 51
-    },
-    {
-      "id": "EFT_SUPERVISION",
-      "file": "laws/EFT_SUPERVISION.md",
-      "title": "전자금융감독규정",
-      "short": "전자금융감독규정",
-      "type": "행정규칙",
-      "category": "전자금융",
-      "no": "금융위원회고시 제2026-29호",
-      "enforced": "2026-07-15",
-      "version": "20260715",
-      "order": 52
-    },
-    {
-      "id": "EFT_SUPERVISION_RULE",
-      "file": "laws/EFT_SUPERVISION_RULE.md",
-      "title": "전자금융감독규정시행세칙",
-      "short": "전자금융감독규정 시행세칙",
-      "type": "행정규칙",
-      "category": "전자금융",
-      "no": "금융감독원세칙",
-      "enforced": "2026-04-20",
-      "version": "20260420",
-      "order": 53
-    },
-    {
       "id": "AI_ACT",
       "file": "laws/AI_ACT.md",
       "title": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
@@ -191,7 +143,7 @@
       "no": "법률 제21311호",
       "enforced": "2026-07-21",
       "version": "20260721",
-      "order": 60
+      "order": 50
     },
     {
       "id": "AI_DECREE",
@@ -203,7 +155,115 @@
       "no": "대통령령 제36506호",
       "enforced": "2026-07-21",
       "version": "20260721",
+      "order": 51
+    },
+    {
+      "id": "EFT_ACT",
+      "file": "laws/EFT_ACT.md",
+      "title": "전자금융거래법",
+      "short": "전자금융거래법",
+      "type": "법률",
+      "category": "전자금융",
+      "no": "법률 제21205호",
+      "enforced": "2025-12-16",
+      "version": "20251216",
+      "order": 60
+    },
+    {
+      "id": "EFT_DECREE",
+      "file": "laws/EFT_DECREE.md",
+      "title": "전자금융거래법 시행령",
+      "short": "전자금융거래법 시행령",
+      "type": "대통령령",
+      "category": "전자금융",
+      "no": "대통령령 제36281호",
+      "enforced": "2026-04-28",
+      "version": "20260428",
       "order": 61
+    },
+    {
+      "id": "EFT_SUPERVISION",
+      "file": "laws/EFT_SUPERVISION.md",
+      "title": "전자금융감독규정",
+      "short": "전자금융감독규정",
+      "type": "행정규칙",
+      "category": "전자금융",
+      "no": "금융위원회고시 제2026-29호",
+      "enforced": "2026-07-15",
+      "version": "20260715",
+      "order": 62
+    },
+    {
+      "id": "EFT_SUPERVISION_RULE",
+      "file": "laws/EFT_SUPERVISION_RULE.md",
+      "title": "전자금융감독규정시행세칙",
+      "short": "전자금융감독규정 시행세칙",
+      "type": "행정규칙",
+      "category": "전자금융",
+      "no": "금융감독원세칙",
+      "enforced": "2026-04-20",
+      "version": "20260420",
+      "order": 63
+    },
+    {
+      "id": "CREDIT_ACT",
+      "file": "laws/CREDIT_ACT.md",
+      "title": "신용정보의 이용 및 보호에 관한 법률",
+      "short": "신용정보법",
+      "type": "법률",
+      "category": "신용정보",
+      "no": "법률 제20304호",
+      "enforced": "2024-08-14",
+      "version": "20240814",
+      "order": 70
+    },
+    {
+      "id": "CREDIT_DECREE",
+      "file": "laws/CREDIT_DECREE.md",
+      "title": "신용정보의 이용 및 보호에 관한 법률 시행령",
+      "short": "신용정보법 시행령",
+      "type": "대통령령",
+      "category": "신용정보",
+      "no": "대통령령 제36074호",
+      "enforced": "2026-02-03",
+      "version": "20260203",
+      "order": 71
+    },
+    {
+      "id": "CREDIT_RULE",
+      "file": "laws/CREDIT_RULE.md",
+      "title": "신용정보의 이용 및 보호에 관한 법률 시행규칙",
+      "short": "신용정보법 시행규칙",
+      "type": "총리령",
+      "category": "신용정보",
+      "no": "총리령 제1635호",
+      "enforced": "2020-08-05",
+      "version": "20200805",
+      "order": 72
+    },
+    {
+      "id": "CREDIT_SUPERVISION",
+      "file": "laws/CREDIT_SUPERVISION.md",
+      "title": "신용정보업감독규정",
+      "short": "신용정보업감독규정",
+      "type": "행정규칙",
+      "category": "신용정보",
+      "no": "금융위원회고시 제2025-2호",
+      "enforced": "2025-02-05",
+      "version": "20250205",
+      "order": 73
+    },
+    {
+      "id": "CREDIT_SUPERVISION_RULE",
+      "file": "laws/CREDIT_SUPERVISION_RULE.md",
+      "title": "신용정보업감독업무시행세칙",
+      "short": "신용정보업감독업무시행세칙",
+      "type": "행정규칙",
+      "category": "신용정보",
+      "no": "금융감독원세칙",
+      "enforced": "2023-08-29",
+      "version": "20230829",
+      "order": 74
     },
     {
       "id": "LBS_ACT",
@@ -215,7 +275,7 @@
       "no": "법률 제21066호",
       "enforced": "2025-10-01",
       "version": "20251001",
-      "order": 70
+      "order": 80
     },
     {
       "id": "LBS_DECREE",
@@ -227,7 +287,7 @@
       "no": "대통령령 제36084호",
       "enforced": "2026-02-10",
       "version": "20260210",
-      "order": 71
+      "order": 81
     },
     {
       "id": "LBS_PROTECTION_STANDARD",
@@ -239,7 +299,7 @@
       "no": "방송미디어통신위원회고시 제2026-11호",
       "enforced": "2026-05-18",
       "version": "20260518",
-      "order": 72
+      "order": 82
     },
     {
       "id": "ISI_ACT",
@@ -251,7 +311,7 @@
       "no": "법률 제19990호",
       "enforced": "2024-07-10",
       "version": "20240710",
-      "order": 80
+      "order": 90
     },
     {
       "id": "ISI_DECREE",
@@ -263,7 +323,7 @@
       "no": "대통령령 제35801호",
       "enforced": "2025-10-01",
       "version": "20251001",
-      "order": 81
+      "order": 91
     },
     {
       "id": "ISI_RULE",
@@ -275,7 +335,7 @@
       "no": "과학기술정보통신부령 제116호",
       "enforced": "2023-10-19",
       "version": "20231019",
-      "order": 82
+      "order": 92
     },
     {
       "id": "TELECOM_ACT",
@@ -287,7 +347,7 @@
       "no": "법률 제21652호",
       "enforced": "2026-05-19",
       "version": "20260519",
-      "order": 90
+      "order": 100
     },
     {
       "id": "TELECOM_DECREE",
@@ -299,7 +359,7 @@
       "no": "대통령령 제36281호",
       "enforced": "2026-04-28",
       "version": "20260428",
-      "order": 91
+      "order": 101
     },
     {
       "id": "TELECOM_TRANSMIT_STANDARD",
@@ -311,7 +371,7 @@
       "no": "방송미디어통신위원회고시 제2026-1호",
       "enforced": "2026-04-28",
       "version": "20260428",
-      "order": 92
+      "order": 102
     }
   ]
 }

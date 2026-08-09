@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-09 21:20 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-09 22:10 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -650,12 +650,17 @@ var LAW_STYLE = {
   TELECOM_TRANSMIT_STANDARD: { abbr:'전송자격', color:'#0ea5e9', family:'전기통신사업법', sub:'전송자격인증기준 고시' },
   EFT_ACT:        { abbr:'전금법',   color:'#a21caf', family:'전자금융거래법' },
   EFT_DECREE:     { abbr:'전금령',   color:'#d946ef', family:'전자금융거래법', sub:'시행령' },
-  EFT_SUPERVISION:      { abbr:'감독규정', color:'#e879f9', family:'전자금융거래법', sub:'전자금융감독규정' },
-  EFT_SUPERVISION_RULE: { abbr:'감독세칙', color:'#f0abfc', family:'전자금융거래법', sub:'감독규정 시행세칙' }
+  EFT_SUPERVISION:      { abbr:'전금규정', color:'#e879f9', family:'전자금융거래법', sub:'전자금융감독규정' },
+  EFT_SUPERVISION_RULE: { abbr:'전금세칙', color:'#f0abfc', family:'전자금융거래법', sub:'감독규정 시행세칙' },
+  CREDIT_ACT:        { abbr:'신정법',   color:'#9a3412', family:'신용정보법' },
+  CREDIT_DECREE:     { abbr:'신정령',   color:'#c2410c', family:'신용정보법', sub:'시행령' },
+  CREDIT_RULE:       { abbr:'신정칙',   color:'#ea580c', family:'신용정보법', sub:'시행규칙' },
+  CREDIT_SUPERVISION:      { abbr:'신정규정', color:'#f97316', family:'신용정보법', sub:'신용정보업감독규정' },
+  CREDIT_SUPERVISION_RULE: { abbr:'신정세칙', color:'#fb923c', family:'신용정보법', sub:'감독업무 시행세칙' }
 };
 var FALLBACK_COLORS = ['#2563eb','#0f766e','#d97706','#7c3aed','#dc2626','#0891b2','#4338ca','#15803d'];
 // 분야(카테고리) 대표 색 — 결과 패널의 분야 밴드(ex3)에 사용. 없으면 그 분야 첫 법령 색으로 대체.
-var CATEGORY_STYLE = { '인증기준':'#0f172a', '정보통신':'#1d4ed8', '개인정보':'#0f766e', '전자상거래':'#e11d48', '전자금융':'#a21caf', '인공지능':'#7c3aed', '위치정보':'#15803d', '정보보호':'#0891b2', '전기통신':'#0369a1' };
+var CATEGORY_STYLE = { '인증기준':'#0f172a', '정보통신':'#1d4ed8', '개인정보':'#0f766e', '전자상거래':'#e11d48', '인공지능':'#7c3aed', '전자금융':'#a21caf', '신용정보':'#c2410c', '위치정보':'#15803d', '정보보호':'#0891b2', '전기통신':'#0369a1' };
 
 // ===== __LOGIC_START__ (순수 로직: 파서·검색 — DOM 비의존, 단위 테스트 대상) =====
 
@@ -782,6 +787,18 @@ function parseArticleHeading(text){
   if (mTitle) artTitle = mTitle[1];
   return { artNo: artNo, artTitle: artTitle };
 }
+
+// 오늘(자정 기준) Date — 시행일 비교용. 사용자 브라우저의 현재 날짜를 따른다(시간이 지나면 결과가 자동 갱신).
+// futureInfo가 쓰므로 순수 로직 블록 안에 둔다(밖에 두면 로직만 떼어 돌리는 테스트에서 undefined).
+function todayStart(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+
+// 가로 병합 표시: 칸에 '←'(또는 '<')만 있으면 왼쪽 칸에 합친다.
+// 세로 병합은 빈 칸이 이미 맡고 있어(위 칸에 합침) 가로는 별도 표시가 있어야 한다 —
+// 빈 칸 하나로 둘을 겸하면 '내부망' 옆 빈 칸이 위로 갈지 왼쪽으로 갈지 가릴 수 없다.
+// 머리행은 위에 합칠 데가 없으므로 빈 칸도 가로 병합으로 본다.
+// (parseLaw가 표 행의 검색 텍스트를 만들 때 쓰므로 순수 로직 블록 안에 둔다 — 밖에 두면
+//  index.html에서 로직만 떼어 돌리는 테스트에서 undefined가 된다.)
+var TBL_LEFT_RE = /^(?:←|<|＜)$/;
 
 // GFM 표 한 행 "| a | b |" -> ['a','b'] ('\|' 이스케이프 복원). 셀 내 <br>는 그대로 보존.
 function parseTableRow(s){
@@ -1153,11 +1170,6 @@ function tableHasHeader(trows){
   }
   return true;
 }
-// 가로 병합 표시: 칸에 '←'(또는 '<')만 있으면 왼쪽 칸에 합친다.
-// 세로 병합은 빈 칸이 이미 맡고 있어(위 칸에 합침) 가로는 별도 표시가 있어야 한다 —
-// 빈 칸 하나로 둘을 겸하면 '내부망' 옆 빈 칸이 위로 갈지 왼쪽으로 갈지 가릴 수 없다.
-// 머리행은 위에 합칠 데가 없으므로 빈 칸도 가로 병합으로 본다.
-var TBL_LEFT_RE = /^(?:←|<|＜)$/;
 // 병합 표기가 어긋나 사각형이 안 나오면(표기 실수) 병합 없이 그린다 — 칸이 밀려 무너지는 것보다 낫다.
 function buildTablePlain(trows, q, hasHead){
   var h = '<table class="lawapp-table"><tbody>', i, j;
@@ -3165,9 +3177,6 @@ function parseUpcoming(val){
   if (!val) return [];
   return String(val).split('|').map(function(s){ return s.trim(); }).filter(Boolean);
 }
-
-// 오늘(자정 기준) Date — 시행일 비교용. 사용자 브라우저의 현재 날짜를 따른다(시간이 지나면 결과가 자동 갱신).
-function todayStart(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
 
 // 본문의 "[시행일: YYYY. M. D.]" 마커에서 '오늘 이후' 시행일을 날짜별로 묶는다(시행일 오름차순).
 // 반환: [{ ymd:'2026. 10. 1.', dt:Date, arts:['제45조', …] }]
