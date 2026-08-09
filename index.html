@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-09 20:05 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-09 21:20 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -655,7 +655,7 @@ var LAW_STYLE = {
 };
 var FALLBACK_COLORS = ['#2563eb','#0f766e','#d97706','#7c3aed','#dc2626','#0891b2','#4338ca','#15803d'];
 // 분야(카테고리) 대표 색 — 결과 패널의 분야 밴드(ex3)에 사용. 없으면 그 분야 첫 법령 색으로 대체.
-var CATEGORY_STYLE = { '정보통신':'#1d4ed8', '전기통신':'#0369a1', '개인정보':'#0f766e', '인공지능':'#7c3aed', '전자상거래':'#e11d48', '위치정보':'#15803d', '정보보호':'#0891b2', '전자금융':'#a21caf' };
+var CATEGORY_STYLE = { '인증기준':'#0f172a', '정보통신':'#1d4ed8', '개인정보':'#0f766e', '전자상거래':'#e11d48', '전자금융':'#a21caf', '인공지능':'#7c3aed', '위치정보':'#15803d', '정보보호':'#0891b2', '전기통신':'#0369a1' };
 
 // ===== __LOGIC_START__ (순수 로직: 파서·검색 — DOM 비의존, 단위 테스트 대상) =====
 
