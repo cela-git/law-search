@@ -253,6 +253,54 @@
       "order": 82
     },
     {
+      "id": "EFT_ACT",
+      "file": "laws/EFT_ACT.md",
+      "title": "전자금융거래법",
+      "short": "전자금융거래법",
+      "type": "법률",
+      "category": "전자금융",
+      "no": "법률 제21205호",
+      "enforced": "2025-12-16",
+      "version": "20251216",
+      "order": 85
+    },
+    {
+      "id": "EFT_DECREE",
+      "file": "laws/EFT_DECREE.md",
+      "title": "전자금융거래법 시행령",
+      "short": "전자금융거래법 시행령",
+      "type": "대통령령",
+      "category": "전자금융",
+      "no": "대통령령 제36281호",
+      "enforced": "2026-04-28",
+      "version": "20260428",
+      "order": 86
+    },
+    {
+      "id": "EFT_SUPERVISION",
+      "file": "laws/EFT_SUPERVISION.md",
+      "title": "전자금융감독규정",
+      "short": "전자금융감독규정",
+      "type": "행정규칙",
+      "category": "전자금융",
+      "no": "금융위원회고시 제2026-29호",
+      "enforced": "2026-07-15",
+      "version": "20260715",
+      "order": 87
+    },
+    {
+      "id": "EFT_SUPERVISION_RULE",
+      "file": "laws/EFT_SUPERVISION_RULE.md",
+      "title": "전자금융감독규정시행세칙",
+      "short": "전자금융감독규정 시행세칙",
+      "type": "행정규칙",
+      "category": "전자금융",
+      "no": "금융감독원세칙",
+      "enforced": "2026-04-20",
+      "version": "20260420",
+      "order": 88
+    },
+    {
       "id": "ISMS_P",
       "file": "laws/ISMS_P.md",
       "title": "정보보호 및 개인정보보호 관리체계(ISMS-P) 인증기준",
