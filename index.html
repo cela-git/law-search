@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-09 18:52 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-09 19:15 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -955,8 +955,13 @@ function futureInfo(L){
   if (!L) return { rows:{} };
   if (L._futureInfo) return L._futureInfo;
   var info = { rows:{} }, rows = L.rows || [], i;
-  var siAny = /\[\s*시행일\s*:\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?\s*\]/;
-  var siHead = /^\[\s*시행일\s*:/;
+  var siAny = /\[\s*시행일\s*[:：]\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?\s*\]/;
+  var siHead = /^\[\s*시행일\s*[:：]/;
+  // 시행일이 이미 지난 마커는 '시행예정'이 아니라 현행이다. 법령 원문에는 지난 시행일
+  // 표기가 그대로 남아 있어(예: 전자금융감독규정 제60조 2015. 4. 16.) 이를 거르지 않으면
+  // 현행 조문이 시행예정으로 뜨고, 2벌 조문은 현행 쪽까지 시행예정이 된다.
+  // 요약표(autoUpcoming)는 이미 같은 기준으로 거르고 있어 그쪽과 표시가 어긋나던 것도 맞춰진다.
+  var t0 = todayStart().getTime();
   var groups = [], cur = null;
   for (i=0;i<rows.length;i++){
     var r = rows[i];
@@ -964,7 +969,11 @@ function futureInfo(L){
     else if (r.isHeading){ cur = null; }                       // 다른 헤딩(절·부칙·별표 등)에서 현재 조문 그룹 종료
     else if (cur){
       var sm = r.text.match(siAny);
-      if (sm) cur.si = (+sm[1])+'. '+(+sm[2])+'. '+(+sm[3])+'.';
+      if (sm){
+        var sd = new Date(+sm[1], (+sm[2])-1, +sm[3]); sd.setHours(0,0,0,0);
+        // 여러 개면 마지막 미래 마커가 그 조문의 시행일(앞쪽은 일부 항·호에만 걸리는 부분 시행일)
+        if (sd.getTime() > t0) cur.si = (+sm[1])+'. '+(+sm[2])+'. '+(+sm[3])+'.';
+      }
       if (siHead.test(r.text)) cur.siIdx = r.idx;              // 단독 [시행일:] 행 → 색칠 대상, diff 본문에선 제외
       else cur.body.push({ idx:r.idx, text:r.text });
     }
