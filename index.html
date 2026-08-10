@@ -562,7 +562,7 @@ html:has(> body > #lawapp-root), body:has(> #lawapp-root){ overflow:hidden; }
     <button class="lawapp-results-reopen" id="lawapp-results-reopen" title="검색 결과 보기" aria-label="검색 결과 보기">›</button>
     <div class="lawapp-columns" id="lawapp-columns"></div>
   </div>
-  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-10 09:35 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
+  <div class="lawapp-footnote">본 서비스는 참고용입니다. 법적 효력의 기준은 국가법령정보센터(law.go.kr) 원문입니다. 별표·서식의 실제 내용은 각 열의 “원문” 링크에서 확인하세요.<span class="lawapp-ver" title="배포 버전(배포 시각 · 한국표준시 KST)">v2026-08-10 10:45 KST</span><!-- VERSION: 배포할 때마다 위 v날짜 시각을 갱신(한국표준시 KST = UTC+9) --></div>
   <div class="lawapp-modal" id="lawapp-summary-modal" role="dialog" aria-modal="true" aria-label="법령 요약표">
     <div class="lawapp-modal-backdrop" id="lawapp-summary-backdrop"></div>
     <div class="lawapp-modal-box">
@@ -824,7 +824,7 @@ function parseLaw(md, fallbackId){
 
   var lines = md.slice(bodyStart).split('\n');
   var rows = [], toc = [];
-  var curSection = '', curSupLabel = '';
+  var curSection = '', curSupLabel = '', inByeolpyo = false;
   var group = { key:'_pre', label:'' };
   var rowIdx = 0;
 
@@ -864,6 +864,7 @@ function parseLaw(md, fallbackId){
       if (t2.indexOf('부칙') === 0){ kind = 'supheading'; curSupLabel = t2; group = { key:'g'+rowIdx, label:t2 }; }
       else if (t2.indexOf('별표') === 0){ kind = 'byeolpyo-heading'; group = { key:'g'+rowIdx, label:t2 }; }
       else { kind = 'section'; curSection = t2; group = { key:'g'+rowIdx, label:t2 }; }
+      inByeolpyo = (kind === 'byeolpyo-heading');
       var r2 = pushRow(kind, 1, t2, '', '', true);
       toc.push({ idx:r2.idx, level:1, text:t2 });
     } else if (/^- \[별[표지]/.test(line)){       // 별표·별지 항목
@@ -881,6 +882,15 @@ function parseLaw(md, fallbackId){
     } else {                                       // 본문 행 (항·호·목 등)
       var rb = pushRow('body', 0, line.trim(), '', '', false);
       rb.indent = bodyIndentLevel(rb.text);        // 들여쓰기 단계(0~5)
+      // '## 별표' 아래에 수록한 별표 전문은 앞 공백 2칸 = 한 단계로 계층을 담을 수 있다.
+      // 이 문서들은 법령 표준(①=항, 1.=호)과 달리 '1.'을 절 제목으로도 써서(1. 접근통제)
+      // 글자만 보고는 깊이를 가릴 수 없기 때문이다. 앞 공백이 없는 줄은 표기가 없다는 뜻이라
+      // 기존대로 r.indent(글자 기준)를 쓴다 — 앞 공백 없이 적어 둔 기존 별표가 평평해지지 않게.
+      // 표시용 단계만 따로 두고 r.indent(위임·제재 연계가 항·호를 세는 값)는 건드리지 않는다.
+      if (inByeolpyo){
+        var byLead = line.length - line.replace(/^ +/, '').length;
+        if (byLead > 0) rb.bypIndent = Math.min(5, byLead >> 1);
+      }
     }
   }
   return { meta: meta, rows: rows, toc: toc };
@@ -2666,6 +2676,8 @@ function renderColumnBody(ci){
     if (r.kind === 'body'){
       if (isIsms){                                  // ▣ 섹션헤더 + 내용 전반 단계 들여쓰기
         indCls = (r.text.charCodeAt(0) === 0x25A3) ? ' lawapp-isms-head' : (' lawapp-isms-d'+ismsIndent(r.text));
+      } else if (r.bypIndent != null){
+        indCls = r.bypIndent ? (' lawapp-ind'+r.bypIndent) : '';   // 별표 전문: MD 앞 공백이 담은 단계
       } else if (r.indent){
         indCls = ' lawapp-ind'+r.indent;            // 일반 법령 항·호·목 내어쓰기
       }
